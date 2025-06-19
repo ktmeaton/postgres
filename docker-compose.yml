@@ -1,0 +1,46 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+
+  postgres:
+    container_name: postgres
+    build: .
+    image: bff-afirms/postgres:17.5-bookworm
+    restart: unless-stopped
+    environment:
+      # Ensure we have information about the host user
+      USER_ID:           ${USER_GROUP_ID:?}
+      # Install the database in a new folder 'postgresql_nonroot' which will
+      # allow the data to be stored as non-root
+      PGDATA:            /var/lib/postgresql_nonroot/main
+      # Default superuser
+      POSTGRES_USER:     ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      # Required Secrets
+      CUSTOM_USER:       ${CUSTOM_USER:?}
+      CUSTOM_PASSWORD:   ${CUSTOM_PASSWORD:?}
+      CUSTOM_DB:         ${CUSTOM_DB:?}
+      # Default connection
+      PGUSER:            ${CUSTOM_USER:?}
+      PGPASSWORD:        ${CUSTOM_PASSWORD:?}
+    # Run as the host's user
+    user:                ${USER_GROUP_ID}
+    volumes:
+      # Database files and backups
+      - ./data/postgres:/var/lib/postgresql_nonroot
+      - ./data/pgbackrest:/var/lib/pgbackrest
+      # Host user information (mapping ids and groups)
+      - /etc/passwd:/etc/passwd:ro
+      # Custom backup configuration (needs to be owned by host user, mounted at compose time)
+      - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
+      # Live updating of source scripts during development
+      - ./scripts/sql:/docker-entrypoint-initdb.d/sql
+    expose:
+      - "5432"
+    command: "-c config_file=/etc/postgresql/postgresql.conf"
+    healthcheck:
+      test: [ "CMD-SHELL", "psql -d $${CUSTOM_DB} -U $${CUSTOM_USER} -l"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
