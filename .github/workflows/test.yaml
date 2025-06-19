@@ -29,5 +29,23 @@ jobs:
       - name: Start Container
         run: |
           docker compose up -d
+
+      - name: Healthcheck
+        uses: stringbean/docker-healthcheck-action@v3
+        id: postgres-container
+        with:
+          container: postgres
+          wait-time: 50
+          require-status: running
+          require-healthy: true
+      
+      - name: Get Status
+        uses: stringbean/docker-healthcheck-action@v3
+        id: postgres-container
+        with:
+          container: postgres
+        
+      - name: Display Status
+        run: echo "Container is ${{ steps.postgres-container.outputs.status  }}"
           
 
