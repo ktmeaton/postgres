@@ -1,3 +1,5 @@
+#!/bin/bash
+
 {
     echo "# Host User information for non-root container usage"
     echo USER_ID=$(id -u)
