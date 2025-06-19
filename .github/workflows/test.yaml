@@ -22,9 +22,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Quick Start
+      - name: Generate Credentials
         run: |
           scripts/generate_credentials.sh > .env
+        
+      - name: Start Container
+        run: |
           docker compose up -d
           
 
