@@ -32,7 +32,6 @@ jobs:
 
       - name: Healthcheck
         uses: stringbean/docker-healthcheck-action@v3
-        id: postgres-container
         with:
           container: postgres
           wait-time: 50
