@@ -36,9 +36,16 @@ A PostgreSQL docker deployment for primary research data and web applications.
     docker compose up -d
     ```
 
+1. Save the db init logs once the container is in a health state.
+
+    ```bash
+    docker logs postgres > data/postgres/main/log/init.log 2>&1
+    ```
+
 ## Database
 
 - Database files are located under `data/postgres`
+- Logs are located under `/data/postgres/main/log`
 
 ### Utilities
 

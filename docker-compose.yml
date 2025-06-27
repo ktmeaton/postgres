@@ -6,8 +6,12 @@ services:
   postgres:
     container_name: postgres
     build: .
-    image: bff-afirms/postgres:17.5-bookworm
+    image: bff-afirms/postgres:17.5
     restart: unless-stopped
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
     environment:
       # Optional domain name for TLS certficates
       TLS_DOMAIN:        ${TLS_DOMAIN:-postgres}
@@ -34,8 +38,6 @@ services:
       - ./data/postgres:/var/lib/postgresql_nonroot
       - ./data/pgbackrest:/var/lib/pgbackrest
       - ./data/certs:/certs
-      # Host user information (mapping ids and groups)
-      - /etc/passwd:/etc/passwd:ro
       # Custom backup configuration (needs to be owned by host user, mounted at compose time)
       - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
       # Live updating of source scripts during development
