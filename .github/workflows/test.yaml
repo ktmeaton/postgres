@@ -29,6 +29,8 @@ jobs:
       - name: Start Container
         run: |
           docker compose up -d
+          sleep 10
+          docker logs postgres
 
       - name: Healthcheck
         uses: stringbean/docker-healthcheck-action@v3
