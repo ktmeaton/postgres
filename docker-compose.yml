@@ -9,6 +9,8 @@ services:
     image: bff-afirms/postgres:17.5-bookworm
     restart: unless-stopped
     environment:
+      # Optional domain name for TLS certficates
+      TLS_DOMAIN:        ${TLS_DOMAIN:-postgres}
       # Ensure we have information about the host user
       USER_ID:           ${USER_GROUP_ID:?}
       # Install the database in a new folder 'postgresql_nonroot' which will
@@ -23,6 +25,7 @@ services:
       CUSTOM_DB:         ${CUSTOM_DB:?}
       # Default connection
       PGUSER:            ${CUSTOM_USER:?}
+      PGDATABASE:        ${CUSTOM_DB:?}
       PGPASSWORD:        ${CUSTOM_PASSWORD:?}
     # Run as the host's user
     user:                ${USER_GROUP_ID}
@@ -30,6 +33,7 @@ services:
       # Database files and backups
       - ./data/postgres:/var/lib/postgresql_nonroot
       - ./data/pgbackrest:/var/lib/pgbackrest
+      - ./data/certs:/certs
       # Host user information (mapping ids and groups)
       - /etc/passwd:/etc/passwd:ro
       # Custom backup configuration (needs to be owned by host user, mounted at compose time)
@@ -40,7 +44,7 @@ services:
       - "5432"
     command: "-c config_file=/etc/postgresql/postgresql.conf"
     healthcheck:
-      test: [ "CMD-SHELL", "psql -d $${CUSTOM_DB} -U $${CUSTOM_USER} -l"]
+      test: [ "CMD-SHELL", "psql --set=sslmode=require -d $${CUSTOM_DB} -U $${CUSTOM_USER} -l"]
       interval: 5s
       timeout: 5s
       retries: 5
