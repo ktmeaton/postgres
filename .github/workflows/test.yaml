@@ -12,6 +12,9 @@ on:
     types: [published]
   workflow_call:
 
+env:
+  GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
 jobs:
 
   lint:
@@ -25,11 +28,10 @@ jobs:
         uses: actions/setup-python@v5
 
       - name: Setup Pre-Commit (Lint)
-        uses: pre-commit/action@v3.0.1
+        run: |
+          pip install pre-commit==4.2.0
 
       - name: Run Checks
-        env:
-          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
         run: |
           pre-commit run --all-files
 
