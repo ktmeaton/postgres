@@ -38,9 +38,13 @@ services:
       - ./data/postgres:/var/lib/postgresql_nonroot
       - ./data/pgbackrest:/var/lib/pgbackrest
       - ./data/certs:/certs
+      # Custom general configuration
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
       # Custom backup configuration (needs to be owned by host user, mounted at compose time)
       - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
-      # Live updating of source scripts during development
+      # Custom auttentication configuration
+      - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      # Custom source scripts
       - ./scripts/sql:/docker-entrypoint-initdb.d/sql
     expose:
       - "5432"
