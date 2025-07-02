@@ -24,15 +24,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Python (Lint)
+      - name: Setup Python
         uses: actions/setup-python@v5
 
-      - name: Setup Pre-Commit (Lint)
+      - name: Setup Pre-Commit
         run: |
           pip install pre-commit==4.2.0
           pre-commit install --install-hooks
 
-      - name: Run Checks
+      - name: Run Pre-Commit
         run: |
           pre-commit run --all-files
 
