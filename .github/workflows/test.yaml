@@ -43,9 +43,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Generate Credentials
+      - name: Run Setup
         run: |
-          scripts/generate_credentials.sh > .env
+          ./setup.sh
 
       - name: Start Container
         run: |
