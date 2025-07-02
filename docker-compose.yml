@@ -1,3 +1,8 @@
+networks:
+  bff_afirms:
+    name: bff_afirms
+    external: true
+
 services:
 
   # ---------------------------------------------------------------------------
