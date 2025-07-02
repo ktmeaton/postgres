@@ -24,10 +24,10 @@ A PostgreSQL docker deployment for primary research data and web applications.
     cd postgres
     ```
 
-1. Generate secure credentials.
+1. Run the setup script.
 
     ```bash
-    scripts/generate_credentials.sh >.env >.env.bak
+    ./setup.sh
     ```
 
 1. Start the database container.
