@@ -8,7 +8,7 @@ echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tChecking if docker network exists: bff_af
 network_exists=$(docker network ls  | grep bff_afirms || echo false)
 if [[ $network_exists == "false" ]]; then
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating docker network: bff_afirms"
-  docker create network bff_afirms
+  docker network create bff_afirms
 else
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tDocker network exists: bff_afirms"
 fi

@@ -48,6 +48,8 @@ services:
       - ./scripts/sql:/docker-entrypoint-initdb.d/sql
     expose:
       - "5432"
+    networks:
+      - bff_afirms
     healthcheck:
       test: [ "CMD-SHELL", "PGPASSWORD=$${CUSTOM_PASSWORD} psql --set=sslmode=require -d $${CUSTOM_DB} -U $${CUSTOM_USER} -l"]
       interval: 10s
