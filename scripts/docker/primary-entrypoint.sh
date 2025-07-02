@@ -61,9 +61,12 @@ docker_create_db_directories() {
 }
 
 docker_create_tls_certificates() {
-	if [[ -e /certs && ! -e /certs/postgres.pem ]]; then
-	    echo "Creating TLS Certficates: /certs"
-		CAROOT=/certs mkcert -cert-file /certs/postgres.pem -key-file /certs/postgres-key.pem ${TLS_DOMAIN:-postgres} 
+	if [[ -e /data/certs && ! -e /data/certs/server.crt ]]; then
+	    export CAROOT=/data/certs
+	    echo "Creating TLS Certficates: ${CAROOT}"
+		mkcert -cert-file ${CAROOT}/server.crt -key-file ${CAROOT}/server.key ${TLS_DOMAIN:-postgres}
+		mv ${CAROOT}/rootCA.pem ${CAROOT}/root.crt
+		mv ${CAROOT}/rootCA-key.pem ${CAROOT}/root.key
 	fi
 }
 
