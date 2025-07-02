@@ -14,11 +14,27 @@ on:
 
 jobs:
 
-  docker:
-
+  lint:
     runs-on: ubuntu-latest
-
     steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python (Lint)
+        uses: actions/setup-python@v5
+
+      - name: Setup Pre-Commit (Lint)
+        uses: pre-commit/action@v3
+
+      - name: Run Checks
+        run: |
+          pre-commit run --all-files
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+
       - name: Checkout Repository
         uses: actions/checkout@v3
 
