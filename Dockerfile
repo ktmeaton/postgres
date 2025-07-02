@@ -37,3 +37,6 @@ ENV PSQL_PAGER='less -S'
 
 # Start in the entrypoint directory
 WORKDIR /docker-entrypoint-initdb.d
+
+# Use the custom server config file
+CMD ["-c","config_file=/etc/postgresql/postgresql.conf"]

@@ -60,6 +60,14 @@ docker_create_db_directories() {
 	fi
 }
 
+# used to create initial pgbackrest directories and if run as root, ensure ownership to the "postgres" user
+docker_create_backup_directories() {
+	if [[ -e /data/pgbackrest ]]; then
+		mkdir -p /data/pgbackrest/log
+	fi
+}
+
+# used to create TLS certificates for SSL
 docker_create_tls_certificates() {
 	if [[ -e /data/certs && ! -e /data/certs/server.crt ]]; then
 	    export CAROOT=/data/certs
@@ -357,7 +365,8 @@ _main() {
 			# then restart script as postgres user
 			exec gosu postgres "$BASH_SOURCE" "$@"
 		fi
-		docker_create_tls_certificates		
+		docker_create_backup_directories
+		docker_create_tls_certificates
 
 		# only run initialization on an empty data directory
 		if [ -z "$DATABASE_ALREADY_EXISTS" ]; then
