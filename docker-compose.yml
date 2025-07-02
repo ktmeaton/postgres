@@ -22,9 +22,6 @@ services:
       USER_ID:           ${USER_GROUP_ID:?}
       # Install the database in a custom folder for non-root access
       PGDATA:               /data/postgresql/main
-      # Enforce encrypted password for initialization (default is trust)
-      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
-      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
       # Default superuser
       POSTGRES_USER:       ${POSTGRES_USER:?}
       POSTGRES_PASSWORD:   ${POSTGRES_PASSWORD:?}
@@ -39,11 +36,11 @@ services:
       - ./data/certs:/data/certs
       - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
       # Custom general configuration
-      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
-      # Custom auttentication configuration
-      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      # Custom authentication configuration
+      - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
       # Custom source scripts
-      # - ./scripts/sql:/docker-entrypoint-initdb.d/sql
+      - ./scripts/sql:/docker-entrypoint-initdb.d/sql
     expose:
       - "5432"
     healthcheck:
