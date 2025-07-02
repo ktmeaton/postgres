@@ -5,12 +5,13 @@ A PostgreSQL docker deployment for primary research data and web applications.
 ## Features
 
 - **Rootless**: Runs the `postgres` container as the host user.
+  - Stores persistent data under the a local (`.data/`) directory.
   - See the [Best Practices](https://www.docker.com/blog/understanding-the-docker-user-instruction/) about running containers as non-root.
 - **Non-Superuser**: Creates a custom database and user who is not a superuser.
-  - Avoids running as the default `postgres` superuser.
+  - Avoids running as the default superuser (`postgres`).
   - Useful when creating a single database for a web application.
-- **Security**: Enforces encrypted password authenication (scram-sha-256).
-  - Blocks login attempts from the `postgres` user unless they are coming from directly within the docker container.
+- **Security**: Enforces SSl/TLS and encrypted password authenication (scram-sha-256).
+  - Blocks login attempts from the superuser unless they are coming from directly within the docker container.
 - **Backups**: Database backups scheduled with [`pgBackRest`](https://pgbackrest.org/) and [`pg_cron`](https://github.com/citusdata/pg_cron).
   - Allows [Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html).
 
@@ -35,7 +36,7 @@ A PostgreSQL docker deployment for primary research data and web applications.
     docker compose up -d
     ```
 
-1. Save the db init logs once the container is in a health state.
+1. (Optional) save the initialization logs once the container is in a healthy state.
 
     ```bash
     docker logs postgres > data/postgres/main/log/init.log 2>&1
