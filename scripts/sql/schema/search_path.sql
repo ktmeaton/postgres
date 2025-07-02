@@ -19,7 +19,7 @@ begin
 end $$;
 
 -- reconnect to fresh search path
-\c 
+\c
 
 -- display schema
 \echo '-------------------------------------------------------------------------------'

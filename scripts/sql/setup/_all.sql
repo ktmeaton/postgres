@@ -64,7 +64,7 @@ select set_config('custom.username', :'custom_user', false);
 SET custom.password = '';
 SELECT set_config('custom.password', :'custom_password', false);
 -- Restore output logging
-\o 
+\o
 
 do $$
 declare

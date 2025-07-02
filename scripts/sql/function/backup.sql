@@ -95,7 +95,7 @@ BEGIN
                 data->'status' AS status,
                 data->'repo' AS repo,
                 jsonb_array_elements( data->'backup') AS backup,
-                jsonb_array_elements( data->'archive') AS archive 
+                jsonb_array_elements( data->'archive') AS archive
             FROM jsonb_array_elements(backup.get_backup_json()) AS data
         )
         SELECT

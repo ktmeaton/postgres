@@ -1,7 +1,7 @@
 \echo '-------------------------------------------------------------------------------'
 \echo '-- creating view: log'
 
-create or replace view backup.log 
+create or replace view backup.log
 with(security_invoker=true)
 as
 select
@@ -22,4 +22,3 @@ from backup.get_backup_log();
 
 -- comments
 comment on view backup.log is 'database backup log from pgbackrest.';
-

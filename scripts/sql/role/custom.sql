@@ -13,7 +13,7 @@ SET custom.password = '';
 select set_config('custom.password', :'custom_password', false);
 
 -- Restore output logging
-\o 
+\o
 
 \ir ../function/role.sql
 call create_user(current_setting('custom.username'), current_setting('custom.password'));

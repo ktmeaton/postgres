@@ -5,15 +5,14 @@ A PostgreSQL docker deployment for primary research data and web applications.
 ## Features
 
 - **Rootless**: Runs the `postgres` container as the host user.
-    - See the [Best Practices](https://www.docker.com/blog/understanding-the-docker-user-instruction/) about running containers as non-root.
+  - See the [Best Practices](https://www.docker.com/blog/understanding-the-docker-user-instruction/) about running containers as non-root.
 - **Non-Superuser**: Creates a custom database and user who is not a superuser.
-    - Avoids running as the default `postgres` superuser.
-    - Useful when creating a single database for a web application.
+  - Avoids running as the default `postgres` superuser.
+  - Useful when creating a single database for a web application.
 - **Security**: Enforces encrypted password authenication (scram-sha-256).
-    - Blocks login attempts from the `postgres` user unless they are coming from directly within the docker container.
+  - Blocks login attempts from the `postgres` user unless they are coming from directly within the docker container.
 - **Backups**: Database backups scheduled with [`pgBackRest`](https://pgbackrest.org/) and [`pg_cron`](https://github.com/citusdata/pg_cron).
-    - Allows [Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html).
-
+  - Allows [Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html).
 
 ## Usage
 
@@ -47,6 +46,11 @@ A PostgreSQL docker deployment for primary research data and web applications.
 - Database files are located under `data/postgres`
 - Logs are located under `/data/postgres/main/log`
 
+## Backup
+
+- Database backups can be found under `data/pgbackrest`
+- Backup scheduling is specified in `scripts/sql/extension/cron.sql`
+
 ### Utilities
 
 - Apply updates from a single script (ex. cron configuration).
@@ -60,13 +64,6 @@ A PostgreSQL docker deployment for primary research data and web applications.
     ```bash
     docker exec postgres psql -U postgres postgres -f sql/_all.sql
     ```
-
-## Backup
-
-- Database backups can be found under `data/pgbackrest`
-- Backup scheduling is specified in `scripts/sql/extension/cron.sql`
-
-### Utilities
 
 - Check current backup schedule:
 

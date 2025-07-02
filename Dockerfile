@@ -14,7 +14,7 @@ COPY scripts/docker/primary-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY scripts/docker/secondary-entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 COPY scripts/sql /docker-entrypoint-initdb.d/sql
 
-# Transfer ownership (root->postgres) for directories 
+# Transfer ownership (root->postgres) for directories
 # that will become mounted volumes from container -> host
 RUN chown -R postgres:postgres /docker-entrypoint-initdb.d \
     && chown postgres:postgres /var/log/postgresql \
