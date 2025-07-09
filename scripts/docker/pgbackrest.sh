@@ -1,7 +1,6 @@
 #!/bin/bash
 
 docker run \
-    --tty \
     --rm \
     --entrypoint pgbackrest  \
     --user $(id -u):$(id -g) \
