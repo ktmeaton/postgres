@@ -71,7 +71,7 @@ jobs:
       - name: pgBackRest Test
         run: |
           docker compose exec -T -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -c "select * from backup.log"'
-          last_backup=$(docker exec --tty -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -Atq -c "select last_successful_backup from backup.get_backup_latest()"')
+          last_backup=$(docker compose exec -T -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -Atq -c "select last_successful_backup from backup.get_backup_latest()"')
           last_backup=$(echo "$last_backup" | tr -d '\r')
           docker compose down
           find data/postgres/main -mindepth 1 -delete
