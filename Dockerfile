@@ -34,6 +34,7 @@ RUN wget -O /usr/local/bin/mkcert https://github.com/FiloSottile/mkcert/releases
 
 # Use less with no line wrapping for nicer query results
 ENV PSQL_PAGER='less -S'
+ENV TZ='Canada/Mountain'
 
 # Start in the entrypoint directory
 WORKDIR /docker-entrypoint-initdb.d

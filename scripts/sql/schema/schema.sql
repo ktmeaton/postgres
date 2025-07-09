@@ -3,12 +3,7 @@
 \echo '-------------------------------------------------------------------------------'
 
 set role postgres;
-comment on schema public is 'default public schema.';
-
-\echo '-------------------------------------------------------------------------------'
-\echo '-- creating schema: backup'
-create schema if not exists backup;
-comment on schema backup is 'Database backups and logs.';
+comment on schema public is 'Default public schema.';
 
 \echo '-------------------------------------------------------------------------------'
 \echo '-- creating schema: extension'

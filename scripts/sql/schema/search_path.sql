@@ -14,8 +14,8 @@ declare
     custom_user text := current_setting('custom.username');
 begin
     execute format('alter database %I set search_path to public, extension', custom_db);
-    execute format('alter role postgres in database %I set search_path to public, extension, backup', custom_db);
-    execute format('alter role %I in database %I set search_path to public, extension, backup', custom_user, custom_db);
+    execute format('alter role postgres in database %I set search_path to public, extension', custom_db);
+    execute format('alter role %I in database %I set search_path to public, extension', custom_user, custom_db);
 end $$;
 
 -- reconnect to fresh search path

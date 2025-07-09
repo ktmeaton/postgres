@@ -34,6 +34,8 @@ services:
       CUSTOM_USER:         ${CUSTOM_USER:?}
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
       CUSTOM_DB:           ${CUSTOM_DB:?}
+      # Timezone
+      TZ:                  'Canada/Mountain'
     volumes:
       # Database files and backups
       - ./data/postgres:/data/postgresql
@@ -45,7 +47,7 @@ services:
       # Custom authentication configuration
       - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
       # Custom source scripts
-      - ./scripts/sql:/docker-entrypoint-initdb.d/sql
+      - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
     expose:
       - "5432"
     networks:

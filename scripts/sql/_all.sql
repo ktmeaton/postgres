@@ -25,7 +25,7 @@ select set_config('custom.db', :'custom_db', false);
 \ir application/_all.sql
 
 -- reconnect to refresh changes.
-\c
+\c postgres
 
 -- create full backup if one doesn't already exist.
 set role postgres;
@@ -38,9 +38,6 @@ end $do$;
 \echo '-------------------------------------------------------------------------------'
 \echo 'backup log:'
 select * from backup.log;
-
--- final location and role setting
-\c
 
 \echo '-------------------------------------------------------------------------------'
 \echo '-- database initialization complete'

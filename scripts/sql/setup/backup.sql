@@ -1,7 +1,8 @@
 \echo '-------------------------------------------------------------------------------'
-\echo '--  Backup Functions'
+\echo '--  Backup Setup'
 \echo '-------------------------------------------------------------------------------'
 
+\c postgres;
 set role postgres;
 
 \echo '-------------------------------------------------------------------------------'
@@ -28,7 +29,7 @@ BEGIN
     -- Copy data into the table directly from the pgBackRest info command
     copy temp_pgbackrest_data (data)
         from program
-            'pgbackrest --output=json info' (format text);
+            'PGPASSWORD=$POSTGRES_PASSWORD pgbackrest --output=json info' (format text);
 
     select replace(temp_pgbackrest_data.data, E'\n', '\n')::jsonb
       into data
@@ -57,10 +58,10 @@ BEGIN
         WITH stanza AS
         (
             SELECT
-                data->'name' AS name,
+                replace((data->'name')::text, '"', '') AS name,
                 data->'backup'->(jsonb_array_length(data->'backup') - 1) AS last_backup,
                 data->'archive'->(jsonb_array_length(data->'archive') - 1) AS current_archive,
-                data->'backup'->(jsonb_array_length(data->'backup') - 1)->'type' AS backup_type
+                replace((data->'backup'->(jsonb_array_length(data->'backup') - 1)->'type')::text, '"', '') AS backup_type
             FROM jsonb_array_elements(backup.get_backup_json()) AS data
         )
         SELECT name::TEXT,
@@ -124,7 +125,7 @@ BEGIN
     CREATE TEMP TABLE temp_backup_incremental (data TEXT);
     -- Copy data into the table directly from the command
     COPY temp_backup_incremental (data)
-    FROM program 'pgbackrest --stanza=main --type incr backup' (format TEXT);
+    FROM program 'PGPASSWORD=$POSTGRES_PASSWORD pgbackrest --stanza=main --type incr backup' (format TEXT);
     -- Concatenate lines into one record.
     WITH log AS (
         SELECT 't' AS t, string_agg(temp_backup_incremental.data, '\n') AS lines
@@ -153,7 +154,7 @@ BEGIN
     CREATE TEMP TABLE temp_backup_diff (data TEXT);
     -- Copy data into the table directly from the command
     COPY temp_backup_diff (data)
-    FROM program 'pgbackrest --stanza=main --type diff backup' (format TEXT);
+    FROM program 'PGPASSWORD=$POSTGRES_PASSWORD pgbackrest --stanza=main --type diff backup' (format TEXT);
     -- Concatenate lines into one record.
     WITH log AS (
         SELECT 't' AS t, string_agg(temp_backup_diff.data, '\n') AS lines
@@ -179,7 +180,7 @@ BEGIN
     CREATE TEMP TABLE temp_backup_full (data TEXT);
     -- Copy data into the table directly from the command
     COPY temp_backup_full (data)
-    FROM program 'pgbackrest --stanza=main --type full backup' (format TEXT);
+    FROM program 'PGPASSWORD=$POSTGRES_PASSWORD pgbackrest --stanza=main --type full backup' (format TEXT);
     -- Concatenate lines into one record.
     WITH log AS (
         SELECT 't' AS t, string_agg(temp_backup_full.data, '\n') AS lines
@@ -193,3 +194,28 @@ END $$ LANGUAGE plpgsql;
 
 -- Display functions
 \df+ backup.*;
+
+\echo '-------------------------------------------------------------------------------'
+\echo '-- creating view: log'
+
+create or replace view backup.log
+with(security_invoker=true)
+as
+select
+    replace(cluster::text, '"', '') as cluster,
+    (db->'id')::integer as db_id,
+    (status->'code')::integer as code,
+    replace((status->'message')::text, '"', '') as message,
+    to_timestamp((backup->'timestamp'->'start')::numeric)::timestamptz as start,
+    to_timestamp((backup->'timestamp'->'stop')::numeric)::timestamptz as stop,
+    replace((backup->'label')::text, '"', '') as label,
+    replace((backup->'prior')::text, '"', '') as prior,
+    round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
+    'gb'::text as size_units,
+    (backup->'info'->'delta')::integer as delta,
+    replace((backup->'type')::text, '"', '') as type,
+    (backup->'error')::boolean as error
+from backup.get_backup_log();
+
+-- comments
+comment on view backup.log is 'database backup log from pgbackrest.';
