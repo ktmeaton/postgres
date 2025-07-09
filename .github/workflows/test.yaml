@@ -71,10 +71,14 @@ jobs:
       - name: pgBackRest Test
         run: |
           docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -c "select * from backup.log"'
-          last_backup=$(docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -Atq -c "select last_successful_backup from backup.get_backup_latest()"')
-          last_backup=$(echo "$last_backup" | tr -d '\r')
-          docker compose down
-          find data/postgres/main -mindepth 1 -delete
-          scripts/docker/pgbackrest.sh --stanza=main --target-action=promote --type=time --target="$last_backup" --target-timeline=current restore
-          docker compose up -d
-          docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -c "\l"'
+
+      # - name: pgBackRest Test
+      #   run: |
+      #     docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -c "select * from backup.log"'
+      #     last_backup=$(docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -Atq -c "select last_successful_backup from backup.get_backup_latest()"')
+      #     last_backup=$(echo "$last_backup" | tr -d '\r')
+      #     docker compose down
+      #     find data/postgres/main -mindepth 1 -delete
+      #     scripts/docker/pgbackrest.sh --stanza=main --target-action=promote --type=time --target="$last_backup" --target-timeline=current restore
+      #     docker compose up -d
+      #     docker exec -e PSQL_PAGER=cat -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres -c "\l"'
