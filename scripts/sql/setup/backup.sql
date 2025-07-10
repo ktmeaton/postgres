@@ -63,7 +63,7 @@ BEGIN
         WITH stanza AS
         (
             SELECT
-                data->>'name')::text AS name,
+                data->>'name'::text AS name,
                 data->'backup'->(jsonb_array_length(data->'backup') - 1) AS last_backup,
                 data->'archive'->(jsonb_array_length(data->'archive') - 1) AS current_archive,
                 (data->'backup'->(jsonb_array_length(data->'backup') - 1)->>'type') AS backup_type
@@ -174,23 +174,6 @@ begin
 
   -- final return
   return data;
-end
-$$;
-
-do $$
-declare
-  l text;
-  expire text;
-begin
-    create temp table temp_expire_incr (expire text);
-    for l in (select label from backup.log where type = 'incr') loop
-      raise info 'Expiring incremental backup: %', l;
-      execute format(
-        'copy temp_expire_incr (expire) FROM program ''pgbackrest expire --stanza=main --set=%s'' (format text)',
-        l
-    );
-    end loop;
-    drop table temp_expire_incr;
 end
 $$;
 
