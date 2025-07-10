@@ -29,11 +29,15 @@ select set_config('custom.db', :'custom_db', false);
 
 -- create full backup if one doesn't already exist.
 set role postgres;
-do $do$ begin
+do $$
+begin
     if not exists ( select from backup.log where type = 'full' ) then
         perform backup.run('full', 'source="setup"');
     end if;
-end $do$;
+    if not exists ( select from backup.log where type = 'diff' ) then
+        perform backup.run('diff', 'source="setup"');
+    end if;
+end $$;
 
 \echo '-------------------------------------------------------------------------------'
 \echo 'backup log:'

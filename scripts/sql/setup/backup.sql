@@ -183,7 +183,8 @@ select
     to_timestamp((backup->'timestamp'->'stop')::numeric)::timestamptz as stop,
     round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
     'gb'::text as size_units,
-    (backup->'info'->'delta')::integer as delta,
+    (backup->'info'->'delta')::integer / (1024 * 1024) as delta,
+    'mb'::text as delta_units,
     backup->'annotation' as annotation
 from backup.get_log();
 
@@ -209,7 +210,8 @@ select
     backup->>'prior' as prior,
     round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
     'gb'::text as size_units,
-    (backup->'info'->'delta')::integer as delta,
+    (backup->'info'->'delta')::integer / (1024 * 1024) as delta,
+    'mb'::text as delta_units,
     backup->'annotation' as annotation,
     backup->'lsn'->>'start'as lsn_start,
     backup->'lsn'->>'stop' as lsn_stop
