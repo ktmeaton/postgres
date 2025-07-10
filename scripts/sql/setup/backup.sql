@@ -124,7 +124,8 @@ language plpgsql
 as $$
 declare
   data text;
-  timeline integer;
+  l text;
+  expire text;
 begin
   raise log 'Creating pgBackRest % backup.', backup_type;
   -- Create a temp table to hold the command output
@@ -145,7 +146,51 @@ begin
   ) into data;
   -- Cleanup and return output
   execute format('drop table temp_backup_%s', backup_type);
+
+  -- expire all old diffs after new full is created
+  create temp table temp_expire (expire text);
+  if backup_type = 'full' then
+    for l in (select label from backup.log where type = 'diff') loop
+      raise log 'Expiring diff backup: %', l;
+      execute format(
+        'copy temp_expire (expire) FROM program ''pgbackrest expire --stanza=main --set=%s'' (format text)',
+        l
+    );
+    end loop;
+  end if;
+
+  -- expire all old incrementals after new diff is created
+  if backup_type = 'diff' then
+    for l in (select label from backup.log where type = 'incr') loop
+      raise log 'Expiring incremental backup: %', l;
+      execute format(
+        'copy temp_expire (expire) FROM program ''pgbackrest expire --stanza=main --set=%s'' (format text)',
+        l
+    );
+    end loop;
+  end if;
+
+  drop table temp_expire;
+
+  -- final return
   return data;
+end
+$$;
+
+do $$
+declare
+  l text;
+  expire text;
+begin
+    create temp table temp_expire_incr (expire text);
+    for l in (select label from backup.log where type = 'incr') loop
+      raise info 'Expiring incremental backup: %', l;
+      execute format(
+        'copy temp_expire_incr (expire) FROM program ''pgbackrest expire --stanza=main --set=%s'' (format text)',
+        l
+    );
+    end loop;
+    drop table temp_expire_incr;
 end
 $$;
 
