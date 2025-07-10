@@ -63,10 +63,10 @@ BEGIN
         WITH stanza AS
         (
             SELECT
-                replace((data->'name')::text, '"', '') AS name,
+                data->>'name')::text AS name,
                 data->'backup'->(jsonb_array_length(data->'backup') - 1) AS last_backup,
                 data->'archive'->(jsonb_array_length(data->'archive') - 1) AS current_archive,
-                replace((data->'backup'->(jsonb_array_length(data->'backup') - 1)->'type')::text, '"', '') AS backup_type
+                (data->'backup'->(jsonb_array_length(data->'backup') - 1)->>'type') AS backup_type
             FROM jsonb_array_elements(backup.get_json()) AS data
         )
         SELECT name::TEXT,
@@ -178,15 +178,16 @@ select
     cluster,
     (db->>'id')::integer as db_id,
     backup->>'type' as type,
-    (backup->'error')::boolean as error,
     to_timestamp((backup->'timestamp'->'start')::numeric)::timestamptz as start,
     to_timestamp((backup->'timestamp'->'stop')::numeric)::timestamptz as stop,
+    backup->>'label' as label,
     round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
     'gb'::text as size_units,
     (backup->'info'->'delta')::integer / (1024 * 1024) as delta,
     'mb'::text as delta_units,
     backup->'annotation' as annotation
-from backup.get_log();
+from backup.get_log()
+where (backup->'error')::boolean is false;
 
 -- comments
 comment on view backup.log is 'Database backup log from pgbackrest.';
@@ -201,18 +202,18 @@ select
     cluster,
     (db->>'id')::integer as db_id,
     backup->>'type' as type,
-    (backup->'error')::boolean as error,
-    (status->>'code')::integer as code,
-    status->>'message' as message,
     to_timestamp((backup->'timestamp'->'start')::numeric)::timestamptz as start,
     to_timestamp((backup->'timestamp'->'stop')::numeric)::timestamptz as stop,
     backup->>'label' as label,
-    backup->>'prior' as prior,
     round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
     'gb'::text as size_units,
     (backup->'info'->'delta')::integer / (1024 * 1024) as delta,
     'mb'::text as delta_units,
     backup->'annotation' as annotation,
+    (backup->'error')::boolean as error,
+    (status->>'code')::integer as code,
+    status->>'message' as message,
+    backup->>'prior' as prior,
     backup->'lsn'->>'start'as lsn_start,
     backup->'lsn'->>'stop' as lsn_stop
 from backup.get_log();
