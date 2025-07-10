@@ -31,7 +31,7 @@ select set_config('custom.db', :'custom_db', false);
 set role postgres;
 do $do$ begin
     if not exists ( select from backup.log where type = 'full' ) then
-        perform backup.run_backup_full();
+        perform backup.run('full', 'source="setup"');
     end if;
 end $do$;
 
