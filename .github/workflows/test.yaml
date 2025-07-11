@@ -68,11 +68,5 @@ jobs:
       - name: Display Status
         run: echo "Container is ${{ steps.postgres-container.outputs.status  }}"
 
-      - name: Test auth
-        run: tests/run.sh --test auth
-
-      - name: Test backup
-        run: tests/run.sh --test backup
-
-      - name: Test cron
-        run: tests/run.sh --test cron
+      - name: Run Tests
+        run: tests/run.sh all

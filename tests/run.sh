@@ -6,6 +6,7 @@ set -e
 # CLI Arguments
 
 num_args=$#
+positional_args=()
 tests_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 project_dir=$(dirname $tests_dir)
 
@@ -19,14 +20,13 @@ while [[ $# -gt 0 ]]; do
       no_cleanup=true
       shift # past argument
       ;;
-    -t|--test)
-      test=$2
-      shift # past argument
-      shift # past value
-      ;;
-    *)
+    -|--*)
       echo "Unknown option $1"
       exit 1
+      ;;
+    *)
+      positional_args+=("$1")
+      shift # past argument
       ;;
   esac
 done
@@ -43,19 +43,11 @@ if [[ "$help" == "true" ]]; then
   exit 0
 fi
 
-if [[ -z $test ]]; then
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tERROR: --test is a required argument."
-  exit 1
-fi
-
 # -----------------------------------------------------------------------------
 # Arguments
 
 test_name="test_$test"
-db=${db:-$test_name}
 env_file=".env"
-test_dir=${tests_dir}/${test_name}
-compose_file="${test_dir}/docker-compose.yml"
 no_cleanup=${no_cleanup:-false}
 
 # -----------------------------------------------------------------------------
@@ -104,53 +96,83 @@ run_pgbackrest () {
 }
 
 # -----------------------------------------------------------------------------
+# Test Check
+
+test_names=()
+for name in ${positional_args[@]}; do
+
+  if [[ $name == "all" ]]; then
+    for test_path in $(ls -d ${tests_dir}/test_*); do
+      test_names+=($(basename $test_path))
+    done
+  else
+    test_name="test_$name"
+    test_dir=${tests_dir}/${test_name}
+    if [[ ! -e $test_dir ]]; then
+      echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tERROR: Test directory does not exist: ${test_dir}"
+      exit 1
+    fi
+    test_names+=(test_$name)
+  fi
+done
+
+# -----------------------------------------------------------------------------
 # Container Setup
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
+for test_name in ${test_names[@]}; do
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t--------------------------------------------------------------------------------------"
+  test_dir=${tests_dir}/${test_name}
+  db=${db:-$test_name}
+  compose_file="${test_dir}/docker-compose.yml"
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
-sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
-sed -E \
-  -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
-  -e "s/container_name: postgres/container_name: $test_name/" \
-  -e "s/^\ + postgres:/\  ${test_name}:/" \
-  -e "s/:-postgres/:-${test_name}/" \
-  -e "s|- \./data|- ${test_dir}/data|g" \
-  -e "s|- \./|- ${project_dir}/|g" \
-  -e "s|build: \.|build: ../../|" \
-  docker-compose.yml > ${compose_file}
-# Make sure it is down
-docker compose --env-file ${env_file} -f ${compose_file} down 2>/dev/null
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files."
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
+  sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
+  sed -E \
+    -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
+    -e "s/container_name: postgres/container_name: $test_name/" \
+    -e "s/^\ + postgres:/\  ${test_name}:/" \
+    -e "s/:-postgres/:-${test_name}/" \
+    -e "s|- \./data|- ${test_dir}/data|g" \
+    -e "s|- \./|- ${project_dir}/|g" \
+    -e "s|build: \.|build: ../../|" \
+    docker-compose.yml > ${compose_file}
+  # Make sure it is down
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStopping container if running: ${test_name}"
+  docker compose --env-file ${env_file} -f ${compose_file} down 2>/dev/null
 
-if [[ -e ${test_dir}/data ]]; then
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
-  rm -rf ${test_dir}/data;
-fi
-cp -r ${project_dir}/data ${test_dir}
-# We will need to regenerate certs with new container/host name
-rm -rf ${test_dir}/data/certs/*
+  if [[ -e ${test_dir}/data ]]; then
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
+    rm -rf ${test_dir}/data;
+  fi
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
-docker compose --env-file ${env_file} -f ${compose_file} up -d 2>/dev/null
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files into test directory."
+  cp -r ${project_dir}/data ${test_dir}
+  # We will need to regenerate certs with new container/host name
+  rm -rf ${test_dir}/data/certs/*
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tWaiting for container status: healthy"
-wait_for_healthy_container "$test_name"
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
+  docker compose --env-file ${env_file} -f ${compose_file} up -d 2>/dev/null
 
-# -----------------------------------------------------------------------------
-# Custom code
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tWaiting for container status: healthy"
+  wait_for_healthy_container "$test_name"
 
-source ${test_dir}/run.sh
+  # -----------------------------------------------------------------------------
+  # Custom code
 
-# -----------------------------------------------------------------------------
-# Cleanup
+  source ${test_dir}/run.sh
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
-if [[ $no_cleanup == 'true' ]]; then
-  rm -rf ${test_dir}/data
-fi
+  # -----------------------------------------------------------------------------
+  # Cleanup
 
-docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
+  if [[ $no_cleanup == 'true' ]]; then
+    rm -rf ${test_dir}/data
+  fi
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
+  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
+
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
+
+done
