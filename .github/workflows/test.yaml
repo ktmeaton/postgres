@@ -71,8 +71,8 @@ jobs:
       - name: Test auth
         run: tests/run.sh --test auth
 
+      - name: Test backup
+        run: tests/run.sh --test backup
+
       - name: Test cron
         run: tests/run.sh --test cron
-
-      - name: Test pgbackrest
-        run: tests/run.sh --test pgbackrest

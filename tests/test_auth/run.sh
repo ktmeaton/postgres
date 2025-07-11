@@ -2,11 +2,6 @@
 
 set +e
 
-# testing
-test_name=test_auth
-test_dir=tests/$test_name
-
-
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tExecuting test script."
 
 observed=${test_dir}/observed.txt
