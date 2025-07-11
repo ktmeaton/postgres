@@ -122,13 +122,12 @@ done
 for test_name in ${test_names[@]}; do
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t--------------------------------------------------------------------------------------"
   test_dir=${tests_dir}/${test_name}
-  db=${db:-$test_name}
   compose_file="${test_dir}/docker-compose.yml"
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
-  sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
+  sed "s/{DB}/${test_name}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
   sed -E \
     -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
     -e "s/container_name: postgres/container_name: $test_name/" \
