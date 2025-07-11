@@ -40,6 +40,7 @@ docker compose up -d
 
 | name            | description                                           | command                          |
 | --------------- | ----------------------------------------------------- | -------------------------------- |
+| test_auth       | Test authentication, security, and tls/ssl.           | `tests/run.sh --test auth`       |
 | test_cron       | Check cron job scheduling, running, and scheduling.   | `tests/run.sh --test cron`       |
 | test_pgbackrest | Check backup and restore functionality of pgBackRest. | `tests/run.sh --test pgbackrest` |
 
