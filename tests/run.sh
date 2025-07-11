@@ -16,9 +16,8 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       ;;
     --no-cleanup)
-      no_cleanup=$2
+      no_cleanup=true
       shift # past argument
-      shift # past value
       ;;
     -t|--test)
       test=$2
@@ -109,14 +108,6 @@ run_pgbackrest () {
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files."
-
-if [[ -e ${test_dir}/data ]]; then
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
-  rm -rf ${test_dir}/data;
-fi
-cp -r ${project_dir}/data ${test_dir}
-
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
 sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
 sed -E \
@@ -128,6 +119,18 @@ sed -E \
   -e "s|- \./|- ${project_dir}/|g" \
   -e "s|build: \.|build: ../../|" \
   docker-compose.yml > ${compose_file}
+# Make sure it is down
+docker compose --env-file ${env_file} -f ${compose_file} down 2>/dev/null
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files."
+
+if [[ -e ${test_dir}/data ]]; then
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
+  rm -rf ${test_dir}/data;
+fi
+cp -r ${project_dir}/data ${test_dir}
+# We will need to regenerate certs with new container/host name
+rm -rf ${test_dir}/data/certs/*
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
 docker compose --env-file ${env_file} -f ${compose_file} up -d 2>/dev/null
@@ -142,6 +145,11 @@ source ${test_dir}/run.sh
 
 # -----------------------------------------------------------------------------
 # Cleanup
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
+if [[ $no_cleanup == 'true' ]]; then
+  rm -rf ${test_dir}/data
+fi
 
 docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
 

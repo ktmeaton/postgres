@@ -8,7 +8,7 @@ set -e
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tExecuting test script."
 
 docker compose --env-file ${env_file} -f ${compose_file} exec -T $test_name \
-  bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -f /tmp/${test_name}.sql" 1> /dev/null 2>&1
+  bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER -f /tmp/${test_name}.sql" 1> /dev/null 2>&1
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tIdentifying restore points."
 cmd="select label,lsn_stop from backup.log_extended where annotation->>'source' = '${test_name}' and annotation->>'comment' = '{comment}' order by stop desc limit 1;"
@@ -16,7 +16,7 @@ comments=("after_create" "after_insert" "after_delete" "after_final")
 declare -A targets
 for comment in ${comments[@]}; do
   comment_cmd=$(echo $cmd | sed "s/{comment}/${comment}/g")
-  target=$(docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -t --csv -c \"$comment_cmd\"" | sed -e "s/\r//g")
+  target=$(docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER -t --csv -c \"$comment_cmd\"" | sed -e "s/\r//g")
   targets[$comment]=$target
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tLocated restore point ($comment): $target"
 done
@@ -43,7 +43,7 @@ for comment in ${comments[@]}; do
   if [[ -e $expected ]]; then rm -f $expected; fi
 
   docker compose --env-file ${env_file} -f ${compose_file} exec -T $test_name \
-    bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres $test_name -t --csv -c 'select * from test' " | \
+    bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER $test_name -t --csv -c 'select * from test' " | \
     tr -d $'\r' \
     > $observed
 
@@ -73,8 +73,6 @@ done
 # -----------------------------------------------------------------------------
 # Cleanup
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
 if [[ $no_cleanup == 'true' ]]; then
-  docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -c \"drop database ${test_name}\"" 1> /dev/null
-  rm -rf ${test_dir}/data
+  docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER -c \"drop database ${test_name}\"" 1> /dev/null
 fi
