@@ -43,13 +43,15 @@ test_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 test_name=$(basename $test_dir)
 project_dir=$(dirname $(dirname $test_dir))
 db=${db:-$test_name}
+env_file=".env"
+compose_file="${test_dir}/docker-compose.yml"
 
 # -----------------------------------------------------------------------------
 # Functions
 
 wait_for_healthy_container () {
   container=$1
-  max_checks=10
+  max_checks=5
   curr_check=1
 
   status=unknown
@@ -63,7 +65,7 @@ wait_for_healthy_container () {
     if [[ $status == "healthy" || $curr_check -ge $max_checks ]]; then
       break
     fi
-    sleep 3
+    sleep 5
     curr_check=$(expr $curr_check + 1)
   done
 
@@ -75,7 +77,7 @@ wait_for_healthy_container () {
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tRunning test: ${test_name}"
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${test_dir}/docker-compose.yml"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
 sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
 sed -E \
   -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
@@ -84,10 +86,10 @@ sed -E \
   -e "s/:-postgres/:-${test_name}/" \
   -e "s|- \./|- ${project_dir}/|g" \
   -e "s|build: \.|build: ../../|" \
-  docker-compose.yml > ${test_dir}/docker-compose.yml
+  docker-compose.yml > ${compose_file}
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
-docker compose --env-file .env -f ${test_dir}/docker-compose.yml up -d
+docker compose --env-file ${env_file} -f ${compose_file} up -d
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tWaiting for container status: healthy"
 wait_for_healthy_container $test_name
@@ -96,7 +98,8 @@ wait_for_healthy_container $test_name
 # Test Script
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tExecuting test script."
-docker exec -it test_pgbackrest bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -f /tmp/${test_name}.sql"
+docker compose --env-file ${env_file} -f ${compose_file} exec -T test_pgbackrest \
+  bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -f /tmp/${test_name}.sql" 1> /dev/null 2>&1
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tIdentifying restore points."
 cmd="select label,lsn_stop from backup.log_extended where annotation->>'source' = '${test_name}' and annotation->>'comment' = '{comment}' order by stop desc limit 1;"
@@ -104,7 +107,7 @@ comments=("after_create" "after_insert" "after_delete" "after_final")
 declare -A targets
 for comment in ${comments[@]}; do
   comment_cmd=$(echo $cmd | sed "s/{comment}/${comment}/g")
-  target=$(docker exec -it ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -t --csv -c \"$comment_cmd\"" | sed -e "s/\r//g")
+  target=$(docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -t --csv -c \"$comment_cmd\"" | sed -e "s/\r//g")
   targets[$comment]=$target
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tLocated restore point ($comment): $target"
 done
@@ -129,7 +132,7 @@ for comment in ${comments[@]}; do
   if [[ -e $observed ]]; then rm -f $observed; fi
   if [[ -e $expected ]]; then rm -f $expected; fi
 
-  docker exec $test_name \
+  docker compose --env-file ${env_file} -f ${compose_file} exec -T $test_name \
     bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres test_pgbackrest -t --csv -c 'select * from test' " | \
     tr -d $'\r' \
     > $observed
@@ -161,6 +164,7 @@ done
 # Cleanup
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
+docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -c \"drop database ${test_name}\""
 docker compose --env-file .env -f ${test_dir}/docker-compose.yml down
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
