@@ -10,8 +10,8 @@ begin
     cron.schedule_in_database('test_cron', '* * * * *', 'select from cron.job', 'postgres', 'postgres', true)
     into job_id;
   raise info 'created cron jobid: %', job_id;
-  raise info 'waiting 1 minute';
-  perform pg_sleep(70);
+  raise info 'waiting 90 seconds';
+  perform pg_sleep(90);
   select exists (select from cron.job_run_details where jobid = job_id and status = 'succeeded') into job_ran;
   perform cron.unschedule(job_id);
 
