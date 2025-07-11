@@ -17,30 +17,14 @@ A PostgreSQL docker deployment for primary research data and web applications.
 
 ## Usage
 
-1. Clone the repository.
+Clone the repository, run the setup script, start the container.
 
-    ```bash
-    git clone https://github.com/BFF-AFIRMS/postgres.git
-    cd postgres
-    ```
-
-1. Run the setup script.
-
-    ```bash
-    ./setup.sh
-    ```
-
-1. Start the database container.
-
-    ```bash
-    docker compose up -d
-    ```
-
-1. (Optional) save the initialization logs once the container is in a healthy state.
-
-    ```bash
-    docker logs postgres > data/postgres/main/log/init.log 2>&1
-    ```
+```bash
+git clone https://github.com/BFF-AFIRMS/postgres.git
+cd postgres
+./setup.sh
+docker compose up -d
+```
 
 ## Database
 
@@ -54,9 +38,10 @@ A PostgreSQL docker deployment for primary research data and web applications.
 
 ## Tests
 
-| name            | description                                      | command                        |
-| --------------- | ------------------------------------------------ | ------------------------------ |
-| test_pgbackrest | Check backup and restore functionality of pgBackRest | `tests/test_pgbackrest/run.sh` |
+| name            | description                                           | command                          |
+| --------------- | ----------------------------------------------------- | -------------------------------- |
+| test_cron       | Check cron job scheduling, running, and scheduling.   | `tests/run.sh --test cron`       |
+| test_pgbackrest | Check backup and restore functionality of pgBackRest. | `tests/run.sh --test pgbackrest` |
 
 ### Utilities
 
