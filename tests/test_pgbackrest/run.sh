@@ -6,6 +6,9 @@ set -e
 # CLI Arguments
 
 num_args=$#
+test_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+test_name=$(basename $test_dir)
+project_dir=$(dirname $(dirname $test_dir))
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -15,6 +18,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -d|--db)
       db=$2
+      shift # past argument
+      shift # past value
+      ;;
+    --no-cleanup)
+      no_cleanup=$2
       shift # past argument
       shift # past value
       ;;
@@ -28,7 +36,8 @@ done
 usage="
 $test_name: Test pgBackRest backup and restore functionality.\n\n
 -h,--help \t Print help and usage\n
--d,--db   \t Database name to create and run test in.
+-d,--db   \t Database name to create and run test in (default: $test_name).\n
+--no-cleanup \t Don't remove test database after completion.
 "
 
 if [[ "$help" == "true" ]]; then
@@ -39,19 +48,17 @@ fi
 # -----------------------------------------------------------------------------
 # Arguments
 
-test_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-test_name=$(basename $test_dir)
-project_dir=$(dirname $(dirname $test_dir))
 db=${db:-$test_name}
 env_file=".env"
 compose_file="${test_dir}/docker-compose.yml"
+no_cleanup=${no_cleanup:-false}
 
 # -----------------------------------------------------------------------------
 # Functions
 
 wait_for_healthy_container () {
   container=$1
-  max_checks=5
+  max_checks=10
   curr_check=1
 
   status=unknown
@@ -65,9 +72,28 @@ wait_for_healthy_container () {
     if [[ $status == "healthy" || $curr_check -ge $max_checks ]]; then
       break
     fi
-    sleep 5
+    sleep 3
     curr_check=$(expr $curr_check + 1)
   done
+
+  return 0
+}
+
+run_pgbackrest () {
+  args=$1
+
+  docker run \
+      --rm \
+      --entrypoint pgbackrest  \
+      --user $(id -u):$(id -g) \
+      -v ${test_dir}/data/postgres:/data/postgresql \
+      -v ${test_dir}/data/pgbackrest:/data/pgbackrest \
+      -v ${test_dir}/data/spool:/var/spool/pgbackrest/ \
+      -v ${test_dir}/data/certs:/data/certs \
+      -v ${project_dir}/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
+      -v ${project_dir}/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
+      bff-afirms/postgres:17.5 \
+      $args
 
   return 0
 }
@@ -75,7 +101,15 @@ wait_for_healthy_container () {
 # -----------------------------------------------------------------------------
 # Container Setup
 
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tRunning test: ${test_name}"
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files."
+
+if [[ -e ${test_dir}/data ]]; then
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
+  rm -rf ${test_dir}/data;
+fi
+cp -r ${project_dir}/data ${test_dir}
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
 sed "s/{DB}/${db}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
@@ -84,15 +118,16 @@ sed -E \
   -e "s/container_name: postgres/container_name: $test_name/" \
   -e "s/^\ + postgres:/\  ${test_name}:/" \
   -e "s/:-postgres/:-${test_name}/" \
+  -e "s|- \./data|- ${test_dir}/data|g" \
   -e "s|- \./|- ${project_dir}/|g" \
   -e "s|build: \.|build: ../../|" \
   docker-compose.yml > ${compose_file}
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
-docker compose --env-file ${env_file} -f ${compose_file} up -d
+docker compose --env-file ${env_file} -f ${compose_file} up -d 2>/dev/null
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tWaiting for container status: healthy"
-wait_for_healthy_container $test_name
+wait_for_healthy_container "$test_name"
 
 # -----------------------------------------------------------------------------
 # Test Script
@@ -119,12 +154,13 @@ for comment in ${comments[@]}; do
   target=${targets[$comment]}
   label=$(echo "$target" | cut -d ',' -f 1)
   lsn=$(echo "$target" | cut -d ',' -f 2)
+
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t--------------------------------------------------------------------------"
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tRestoring point ($comment): lsn=$lsn label=$label"
-  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down
-  scripts/docker/pgbackrest.sh --stanza=main --target-action=promote --type=lsn --target="$lsn" --target-timeline=current restore 1>&2
 
-  docker compose --env-file .env -f ${test_dir}/docker-compose.yml up -d
+  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
+  run_pgbackrest "--stanza=main --target-action=promote --type=lsn --target=$lsn --target-timeline=current restore"
+  docker compose --env-file .env -f ${test_dir}/docker-compose.yml up -d 2> /dev/null
   wait_for_healthy_container $test_name
 
   observed=${test_dir}/observed.txt
@@ -164,7 +200,11 @@ done
 # Cleanup
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up."
-docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -c \"drop database ${test_name}\""
-docker compose --env-file .env -f ${test_dir}/docker-compose.yml down
+if [[ $no_cleanup == 'true' ]]; then
+  docker compose --env-file ${env_file} -f ${compose_file} exec -T ${test_name} bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -c \"drop database ${test_name}\"" 1> /dev/null
+  rm -rf ${test_dir}/data
+fi
+
+docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
