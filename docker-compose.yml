@@ -19,14 +19,14 @@ services:
     cap_drop:
       - ALL
     # Run as the host user for volume mount permissions
-    user:                ${USER_GROUP_ID}
+    user: ${USER_GROUP_ID}
     environment:
       # Optional domain name for TLS certficates
-      TLS_DOMAIN:        ${TLS_DOMAIN:-postgres}
+      TLS_DOMAIN:          ${TLS_DOMAIN:-postgres}
       # Ensure we have information about the host user
-      USER_ID:           ${USER_GROUP_ID:?}
+      USER_ID:             ${USER_GROUP_ID:?}
       # Install the database in a custom folder for non-root access
-      PGDATA:               /data/postgresql/main
+      PGDATA:              /data/postgresql/main
       # Default superuser
       POSTGRES_USER:       ${POSTGRES_USER:?}
       POSTGRES_PASSWORD:   ${POSTGRES_PASSWORD:?}

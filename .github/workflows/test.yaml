@@ -68,17 +68,6 @@ jobs:
       - name: Display Status
         run: echo "Container is ${{ steps.postgres-container.outputs.status  }}"
 
-      - name: pgBackRest Restore
+      - name: test_pgBackRest
         run: |
-          last_backup=$(scripts/docker/get_last_backup.sh)
-          docker compose down
-          scripts/docker/pgbackrest.sh --stanza=main --target-action=promote --type=time --target="$last_backup" --target-timeline=current restore
-          docker compose up -d
-
-      - name: pgBackRest Healthcheck
-        uses: stringbean/docker-healthcheck-action@v3
-        with:
-          container: postgres
-          wait-time: 50
-          require-status: running
-          require-healthy: true
+          tests/test_pgbackrest/run.sh
