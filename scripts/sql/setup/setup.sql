@@ -13,6 +13,16 @@ set role postgres;
 \set on_error_stop off
 
 \echo '-------------------------------------------------------------------------------'
+\echo '-- creating extension: pg_stat_statements'
+
+create extension if not exists pg_stat_statements;
+
+\echo '-------------------------------------------------------------------------------'
+\echo '-- creating extension: pg_walinspect'
+
+create extension if not exists pg_walinspect;
+
+\echo '-------------------------------------------------------------------------------'
 \echo '-- creating temporary database: tmpdb'
 
 create database tmpdb;

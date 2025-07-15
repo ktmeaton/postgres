@@ -1,5 +1,5 @@
 \echo '-------------------------------------------------------------------------------'
-\echo '-- creating custom user'
+\echo '-- creating custom role'
 
 -- Hide password output from logging
 \o /dev/null

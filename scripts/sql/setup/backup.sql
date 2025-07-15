@@ -6,11 +6,6 @@
 set role postgres;
 
 \echo '-------------------------------------------------------------------------------'
-\echo '-- creating extension: pg_walinspect'
-
-create extension if not exists pg_walinspect;
-
-\echo '-------------------------------------------------------------------------------'
 \echo '-- creating schema: backup'
 
 create schema if not exists backup;
