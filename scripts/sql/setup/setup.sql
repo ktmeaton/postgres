@@ -1,9 +1,6 @@
 -- print all query results to stdout
 \out
 
-\echo '-------------------------------------------------------------------------------'
-\echo '-- creating extension: cron'
-
 -- connect to the postgres user db
 \c postgres
 

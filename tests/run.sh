@@ -20,6 +20,11 @@ while [[ $# -gt 0 ]]; do
       no_cleanup=true
       shift # past argument
       ;;
+    --network)
+      network=$2
+      shift # past argument
+      shift # past value
+      ;;
     -|--*)
       echo "Unknown option $1"
       exit 1
@@ -31,11 +36,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+network_default="bff-afirms"
+
 usage="
 Run postgresql tests.\n\n
--h,--help \t Print help and usage\n
---no-cleanup \t Don't remove test database after completion.
--t,--test \t Name of the test to run.
+-h,--help     \t    Print help and usage\n
+--no-cleanup  \t    Don't remove test database after completion.\n
+--network     \t    Name of the network to create (default: ${network_default})\n
+-t,--test     \t    Name of the test to run.
 "
 
 if [[ "$help" == "true" ]]; then
@@ -49,6 +57,7 @@ fi
 test_name="test_$test"
 env_file=".env"
 no_cleanup=${no_cleanup:-false}
+network=${network:-${network_default}}
 
 # -----------------------------------------------------------------------------
 # Functions
@@ -129,17 +138,19 @@ for test_name in ${test_names[@]}; do
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
   sed "s/{DB}/${test_name}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
   sed -E \
+    -e "s/\{NETWORK\}/$network/g" \
+    -e "s/\{NAME\}/$test_name/g" \
+    -e "s/\"$network\"/$network/g" \
+    -e "s/\"$test_name\"/$test_name/g" \
     -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
-    -e "s/container_name: postgres/container_name: $test_name/" \
-    -e "s/^\ + postgres:/\  ${test_name}:/" \
-    -e "s/:-postgres/:-${test_name}/" \
     -e "s|- \./data|- ${test_dir}/data|g" \
     -e "s|- \./|- ${project_dir}/|g" \
     -e "s|build: \.|build: ../../|" \
-    docker-compose.yml > ${compose_file}
+    config/docker-compose.template.yml > ${compose_file}
+
   # Make sure it is down
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStopping container if running: ${test_name}"
-  docker compose --env-file ${env_file} -f ${compose_file} down 2>/dev/null
+  docker compose --env-file ${env_file} -f ${compose_file} down 2> /dev/null
 
   if [[ -e ${test_dir}/data ]]; then
     echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."

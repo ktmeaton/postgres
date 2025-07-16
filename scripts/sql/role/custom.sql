@@ -18,5 +18,10 @@ select set_config('custom.password', :'custom_password', false);
 \ir ../function/role.sql
 call create_user(current_setting('custom.username'), current_setting('custom.password'));
 
+do $$
+begin
+  execute format('comment on role %s is ''Custom user.'' ', current_setting('custom.username'));
+end $$;
+
 -- Reset password to null;
 set custom.password = '';

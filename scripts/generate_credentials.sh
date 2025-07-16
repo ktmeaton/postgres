@@ -14,4 +14,8 @@
     echo CUSTOM_USER=custom
     echo CUSTOM_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
     echo CUSTOM_DB=custom
+
+    echo -e "\n# PostgreSQL Timetable Credentials"
+    echo TIMETABLE_USER=timetable
+    echo TIMETABLE_PASSWORD=$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-zA-Z0-9' | head -c 50)
 }

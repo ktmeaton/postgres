@@ -12,7 +12,7 @@ services:
     container_name: "{NAME}"
     hostname: "{NAME}"
     build: .
-    image: "{NAME}:17.5"
+    image: "{NETWORK}/{NAME}:17.5"
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -35,6 +35,9 @@ services:
       CUSTOM_USER:         ${CUSTOM_USER:?}
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
       CUSTOM_DB:           ${CUSTOM_DB:?}
+      # Timetable user
+      TIMETABLE_USER:      ${TIMETABLE_USER:?}
+      TIMETABLE_PASSWORD:  ${TIMETABLE_PASSWORD:?}
       # Timezone
       TZ:                  'Canada/Mountain'
     volumes:
@@ -47,6 +50,9 @@ services:
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
       # Custom authentication configuration
       - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      # Custom entrypoints
+      - ./scripts/docker/primary-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      - ./scripts/docker/secondary-entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
       # Custom source scripts
       - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
     expose:

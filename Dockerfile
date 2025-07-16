@@ -1,9 +1,14 @@
 FROM postgres:17.5-bookworm
 
+# PostgreSQL Extensions: postgis
 # Unix Tools: pgbackrest, jq, curl
+# Unix GIS Tools: osmium, osm2pgsql
 RUN apt update \
-  && apt install -y \
-     curl pgbackrest jq postgresql-17-cron wget
+  && apt install -y curl pgbackrest jq wget postgresql-17-postgis-3 osmium-tool osm2pgsql
+
+# pg_timetable
+RUN wget https://github.com/cybertec-postgresql/pg_timetable/releases/download/v5.13.0/pg_timetable_Linux_x86_64.deb \
+  && dpkg -i pg_timetable_Linux_x86_64.deb
 
 # Transfer custom configuration files
 COPY config/postgresql.conf /etc/postgresql/postgresql.conf

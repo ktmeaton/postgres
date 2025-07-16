@@ -3,5 +3,5 @@
 \echo '-------------------------------------------------------------------------------'
 
 \ir backup.sql
-\ir cron.sql
+\ir timetable.sql
 \ir setup.sql

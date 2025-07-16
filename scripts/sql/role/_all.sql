@@ -2,4 +2,8 @@
 \echo '-- Role'
 \echo '-------------------------------------------------------------------------------'
 
+comment on role postgres is 'Superuser.';
+
 \ir custom.sql
+
+\du+

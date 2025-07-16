@@ -316,7 +316,10 @@ docker_temp_server_start() {
 
 	# internal start of server in order to allow setup using psql client
 	# does not listen on external TCP/IP and waits until start finishes
-	set -- "$@" -c listen_addresses='' -p "${PGPORT:-5432}"
+	# set -- "$@" -c listen_addresses='' -p "${PGPORT:-5432}"
+
+    # allow more open listening so pg_timetable can do setup
+	set -- "$@" -c listen_addresses='*' -p "${PGPORT:-5432}"
 
 	# unset NOTIFY_SOCKET so the temporary server doesn't prematurely notify
 	# any process supervisor.
@@ -404,6 +407,20 @@ _main() {
 		fi
 	fi
 
+    # delay the start of pg_timetable for a couple seconds
+	# until after postgres server command
+	echo "Starting pg_timetable"
+	( sleep 5; pg_timetable \
+		--log-file=${PGDATA}/log/timetable_run.log \
+		--log-file-format=text \
+		--log-file-rotate \
+		--dbname=postgres \
+		--user=$POSTGRES_USER \
+		--password=$POSTGRES_PASSWORD \
+		--sslmode=require \
+		--clientname=timetable_worker) &
+
+	echo "Starting postgres server"
 	exec "$@"
 }
 

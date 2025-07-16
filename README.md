@@ -5,7 +5,7 @@ A PostgreSQL docker deployment for primary research data and web applications.
 ## Features
 
 - **Rootless**: Runs the `postgres` container as the host user.
-  - Stores persistent data under the a local (`.data/`) directory.
+  - Stores persistent data under the local (`data/`) directory.
   - See the [Best Practices](https://www.docker.com/blog/understanding-the-docker-user-instruction/) about running containers as non-root.
 - **Non-Superuser**: Creates a custom database and user who is not a superuser.
   - Avoids running as the default superuser (`postgres`).
@@ -22,14 +22,14 @@ Clone the repository, run the setup script, and start the container.
 ```bash
 git clone https://github.com/BFF-AFIRMS/postgres.git
 cd postgres
-./setup.sh
+./setup.sh --network bff-afirms --name postgres
 docker compose up -d
 ```
 
 ## Database
 
 - Database files are located under `data/postgres`
-- Logs are located under `/data/postgres/main/log`
+- Logs are located under `data/postgres/main/log`
 
 ## Backup
 
@@ -42,7 +42,7 @@ docker compose up -d
 | --------------- | ----------------------------------------------------- | ------------------------- |
 | test_auth       | Test authentication, security, and tls/ssl.           | `tests/run.sh auth`       |
 | test_backup     | Check backup and restore functionality of pgBackRest. | `tests/run.sh backup`     |
-| test_cron       | Check cron job scheduling, running, and scheduling.   | `tests/run.sh cron`       |
+| test_schedule   | Check job scheduling with pg_timetable.                | `tests/run.sh schedule`  |
 
 To run all the tests, stop the original container first:
 
@@ -65,7 +65,7 @@ tests/run.sh all
     docker exec postgres psql -U postgres postgres -f sql/_all.sql
     ```
 
-- Check current backup schedule:
+- Display the cbackup schedule:
 
     ```bash
     docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select * from cron.job;'

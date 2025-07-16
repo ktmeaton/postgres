@@ -89,6 +89,8 @@ echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating file: docker-compose.yml"
 sed \
   -e "s/{NETWORK}/$network/g" \
   -e "s/{NAME}/$name/g" \
+  -e "s/\"$network\"/$network/g" \
+  -e "s/\"$name\"/$name/g" \
   config/docker-compose.template.yml > docker-compose.yml
 
 # -----------------------------------------------------------------------------
