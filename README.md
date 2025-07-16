@@ -12,7 +12,7 @@ A PostgreSQL docker deployment for primary research data and web applications.
   - Useful when creating a single database for a web application.
 - **Security**: Enforces SSl/TLS and encrypted password authenication (scram-sha-256).
   - Blocks login attempts from the superuser unless they are coming from directly within the docker container.
-- **Backups**: Database backups scheduled with [`pgBackRest`](https://pgbackrest.org/) and [`pg_cron`](https://github.com/citusdata/pg_cron).
+- **Backups**: Database backups scheduled with [`pgBackRest`](https://pgbackrest.org/) and [`pg_timetable`](https://github.com/cybertec-postgresql/pg_timetable).
   - Allows [Point-in-Time Recovery](https://www.postgresql.org/docs/current/continuous-archiving.html).
 
 ## Usage
@@ -34,7 +34,7 @@ docker compose up -d
 ## Backup
 
 - Database backups can be found under `data/pgbackrest`
-- Backup scheduling is specified in `scripts/sql/setup/cron.sql`
+- Backup scheduling is specified in `scripts/sql/setup/timetable.sql`
 
 ## Tests
 
@@ -42,7 +42,7 @@ docker compose up -d
 | --------------- | ----------------------------------------------------- | ------------------------- |
 | test_auth       | Test authentication, security, and tls/ssl.           | `tests/run.sh auth`       |
 | test_backup     | Check backup and restore functionality of pgBackRest. | `tests/run.sh backup`     |
-| test_schedule   | Check job scheduling with pg_timetable.                | `tests/run.sh schedule`  |
+| test_schedule   | Check job scheduling with pg_timetable.               | `tests/run.sh schedule`   |
 
 To run all the tests, stop the original container first:
 
@@ -53,50 +53,51 @@ tests/run.sh all
 
 ### Utilities
 
-- Apply updates from a single script (ex. cron configuration).
+- Display the backup schedule:
 
     ```bash
-    docker exec postgres psql -U postgres postgres -f sql/extension/cron.sql
-    ```
+    docker exec postgres get_backup_schedule
 
-- Apply updates from all sql scripts.
-
-    ```bash
-    docker exec postgres psql -U postgres postgres -f sql/_all.sql
-    ```
-
-- Display the cbackup schedule:
-
-    ```bash
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select * from cron.job;'
-
-     jobid |     schedule     |             command             | nodename | nodeport | database | username | active |      jobname
-    -------+------------------+---------------------------------+----------+----------+----------+----------+--------+--------------------
-         1 | 0 23 * * sat     | select run_backup_full()        |          |     5432 | postgres | postgres | t      | backup_full
-         2 | 0 23 * * sun-fri | select run_backup_diff()        |          |     5432 | postgres | postgres | t      | backup_diff
-         3 | 0 * * * *        | select run_backup_incremental() |          |     5432 | postgres | postgres | t      | backup_incremental
+        chain_name     |      run_at       |                                                command
+    --------------------+-------------------+--------------------------------------------------------------------------------------------------------
+    backup_full        | 0 0 * * 0         | select backup.run('full', 'source="pg_timetable"'); select backup.run('diff', 'source="pg_timetable"')
+    backup_diff        | 0 0,6,12,18 * * * | select backup.run('diff', 'source="pg_timetable"')
+    backup_incr        | 0 * * * *         | select backup.run('incr', 'source="pg_timetable"')
      ```
 
 - Run manual backups.
 
     ```bash
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select backup.run_backup_full();' | tee backup_full.log
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select backup.run_backup_diff();' | tee backup_diff.log
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select backup.run_backup_incremental();' | tee backup_incremental.log
+    docker exec postgres run_backup full
+    docker exec postgres run_backup diff
+    docker exec postgres run_backup incr
+
     ```
 
 - Get information about the latest backup:
 
     ```bash
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select * from backup.get_backup_latest();'
+    docker exec postgres get_backup_latest
 
      cluster | last_successful_backup |    last_archived_wal     | last_backup_type
     ---------+------------------------+--------------------------+------------------
      "main"  | 2025-06-19 14:35:08-06 | 00000001000000000000000E | "incr"
     ```
 
-- Get full backup log:
+- Get extended backup log:
 
     ```bash
-    docker exec -e PSQL_PAGER=cat postgres psql -U postgres postgres -c 'select * from backup.get_backup_log();' | less -S
+    docker exec postgres utils/get_backup_log_extended | less -S
+    ```
+
+- Apply updates from a single script (ex. roles).
+
+    ```bash
+    docker exec postgres bash -c "PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -f sql/role/_all.sql"
+    ```
+
+- Apply updates from all sql scripts.
+
+    ```bash
+    docker exec postgres bash -c "PGPASSWORD=\$POSTGRES_PASSWORD psql -U postgres -f sql/_all.sql"
     ```

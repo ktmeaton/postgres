@@ -1,0 +1,6 @@
+#!/bin/bash
+
+backup_type=$1
+
+PGPASSWORD=$POSTGRES_PASSWORD PGUSER=$POSTGRES_USER psql postgres \
+  -c "select backup.run('$backup_type', 'source=\"manual\"')"

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PGPASSWORD=$POSTGRES_PASSWORD PGUSER=$POSTGRES_USER psql postgres \
+  -c "select * from backup.get_latest()"

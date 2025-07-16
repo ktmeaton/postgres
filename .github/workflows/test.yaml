@@ -68,5 +68,19 @@ jobs:
       - name: Display Status
         run: echo "Container is ${{ steps.postgres-container.outputs.status  }}"
 
+      - name: Check Utils
+        run: |
+          for util in $(ls scripts/utils/); do
+            echo "--------------------------------------------------------------------------------------------------------"
+            echo "util: $util"
+            if [[ "$util" == "run_backup" ]]; then
+              docker exec postgres $util full
+              docker exec postgres $util diff
+              docker exec postgres $util incr
+            else
+              docker exec postgres $util
+            fi
+          done
+
       - name: Run Tests
         run: tests/run.sh all

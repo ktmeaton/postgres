@@ -55,6 +55,7 @@ services:
       - ./scripts/docker/secondary-entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
       # Custom source scripts
       - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
+      - ./scripts/utils/:/docker-entrypoint-initdb.d/utils
     expose:
       - "5432"
     networks:

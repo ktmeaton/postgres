@@ -22,9 +22,9 @@ SELECT timetable.add_job(
     job_max_instances   => 1
 );
 
-\echo 'scheduling job: name=backup_diff, frequency=hourly'
+\echo 'scheduling job: name=backup_incr, frequency=hourly'
 SELECT timetable.add_job(
-    job_name            => 'backup_incremental',
+    job_name            => 'backup_incr',
     job_schedule        => '0 * * * *',
     job_command         => 'select backup.run(''incr'', ''source="pg_timetable"'')',
     job_max_instances   => 1
