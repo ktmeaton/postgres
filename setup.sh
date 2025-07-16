@@ -65,7 +65,7 @@ fi
 
 if [[ ! -e .env ]]; then
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tGenerating credentials: ${name}"
-  scripts/utils/generate_credentials.sh > .env
+  scripts/utils/generate_credentials > .env
   if [[ ! -e .env.bak ]]; then
     cp .env .env.bak
   fi
