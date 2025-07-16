@@ -3,3 +3,4 @@ data/
 .env*
 tests/*/docker-compose.yml
 tests/*/script.sql
+docker-compose.yml

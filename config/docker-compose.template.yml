@@ -1,6 +1,6 @@
 networks:
-  bff_afirms:
-    name: bff_afirms
+  "{NETWORK}":
+    name: "{NETWORK}"
     external: true
 
 services:
@@ -8,10 +8,11 @@ services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Database
 
-  postgres:
-    container_name: postgres
+  "{NAME}":
+    container_name: "{NAME}"
+    hostname: "{NAME}"
     build: .
-    image: bff-afirms/postgres:17.5
+    image: "{NAME}:17.5"
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -51,7 +52,7 @@ services:
     expose:
       - "5432"
     networks:
-      - bff_afirms
+      - {NETWORK}
     healthcheck:
       test: [ "CMD-SHELL", "PGPASSWORD=$${CUSTOM_PASSWORD} psql --set=sslmode=require -d $${CUSTOM_DB} -U $${CUSTOM_USER} -l"]
       interval: 10s
