@@ -12,7 +12,7 @@ services:
     container_name: "{NAME}"
     hostname: "{NAME}"
     build: .
-    image: "{NETWORK}/{NAME}:17.5"
+    image: "bff-afirms/postgres:17.5"
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -23,7 +23,7 @@ services:
     user: ${USER_GROUP_ID}
     environment:
       # Optional domain name for TLS certficates
-      TLS_DOMAIN:          ${TLS_DOMAIN:-postgres}
+      TLS_DOMAIN:          ${TLS_DOMAIN:-{NAME}}
       # Ensure we have information about the host user
       USER_ID:             ${USER_GROUP_ID:?}
       # Install the database in a custom folder for non-root access
@@ -35,9 +35,6 @@ services:
       CUSTOM_USER:         ${CUSTOM_USER:?}
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
       CUSTOM_DB:           ${CUSTOM_DB:?}
-      # Timetable user
-      TIMETABLE_USER:      ${TIMETABLE_USER:?}
-      TIMETABLE_PASSWORD:  ${TIMETABLE_PASSWORD:?}
       # Timezone
       TZ:                  'Canada/Mountain'
     volumes:
