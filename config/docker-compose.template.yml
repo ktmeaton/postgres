@@ -8,9 +8,9 @@ services:
   # ---------------------------------------------------------------------------
   # PostgreSQL Database
 
-  "{NAME}":
-    container_name: "{NAME}"
-    hostname: "{NAME}"
+  "{NAME}-db":
+    container_name: "{NAME}-db"
+    hostname: "{NAME}-db"
     build: .
     image: "bff-afirms/postgres:17.5"
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
     user: ${USER_GROUP_ID}
     environment:
       # Optional domain name for TLS certficates
-      TLS_DOMAIN:          ${TLS_DOMAIN:-{NAME}}
+      TLS_DOMAIN:          ${TLS_DOMAIN:-{NAME}-db}
       # Ensure we have information about the host user
       USER_ID:             ${USER_GROUP_ID:?}
       # Install the database in a custom folder for non-root access

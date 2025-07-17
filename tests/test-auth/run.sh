@@ -12,7 +12,7 @@ if [[ -e $expected ]]; then rm -f $expected; fi
 # ----------------------------------------------------------------------------#
 # superuser password
 
-docker exec ${test_name} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql"
+docker exec ${container} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql"
 exit_code=$?
 
 if [[ $exit_code -eq 0 ]]; then
@@ -25,7 +25,7 @@ fi
 # ----------------------------------------------------------------------------#
 # custom password
 
-docker exec ${test_name} bash -c "PGPASSWORD=\$CUSTOM_PASSWORD PGUSER=\$CUSTOM_USER psql"
+docker exec ${container} bash -c "PGPASSWORD=\$CUSTOM_PASSWORD PGUSER=\$CUSTOM_USER psql"
 exit_code=$?
 
 if [[ $exit_code -eq 0 ]]; then
@@ -38,7 +38,7 @@ fi
 # ----------------------------------------------------------------------------#
 # No Remote Superuser auth
 
-docker exec ${test_name} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql postgres://@test_auth" > $observed 2>&1
+docker exec ${container} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql postgres://@${container}" > $observed 2>&1
 expected='pg_hba.conf rejects connection for .* user "postgres".* SSL encryption'
 observed_debug=$(cat $observed | tr '\n' ';');
 if [[ $(grep -E "$expected" $observed) ]]; then
@@ -51,7 +51,7 @@ fi
 # ----------------------------------------------------------------------------#
 # No Password
 
-docker exec ${test_name} bash -c "psql -U \$POSTGRES_USER" > $observed 2>&1
+docker exec ${container} bash -c "psql -U \$POSTGRES_USER" > $observed 2>&1
 expected="fe_sendauth: no password supplied"
 observed_debug=$(cat $observed | tr '\n' ';');
 
@@ -65,7 +65,7 @@ fi
 # ----------------------------------------------------------------------------#
 # Wrong Password
 
-docker exec ${test_name} bash -c "PGPASSWORD=WRONG_PASSWORD psql -U \$POSTGRES_USER" > $observed 2>&1
+docker exec ${container} bash -c "PGPASSWORD=WRONG_PASSWORD psql -U \$POSTGRES_USER" > $observed 2>&1
 expected="password authentication failed for user"
 observed_debug=$(cat $observed | tr '\n' ';');
 
@@ -79,7 +79,7 @@ fi
 # ----------------------------------------------------------------------------#
 # No SSL
 
-docker exec ${test_name} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql 'postgres://@$test_name?sslmode=disable'" > $observed 2>&1
+docker exec ${container} bash -c "PGPASSWORD=\$POSTGRES_PASSWORD PGUSER=\$POSTGRES_USER psql 'postgres://@$container?sslmode=disable'" > $observed 2>&1
 expected="pg_hba.conf rejects connection for host .* no encryption"
 observed_debug=$(cat $observed | tr '\n' ';');
 

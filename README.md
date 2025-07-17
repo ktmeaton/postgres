@@ -40,15 +40,15 @@ docker compose up -d
 
 | name            | description                                           | command                   |
 | --------------- | ----------------------------------------------------- | ------------------------- |
-| test_auth       | Test authentication, security, and tls/ssl.           | `tests/run.sh auth`       |
-| test_backup     | Check backup and restore functionality of pgBackRest. | `tests/run.sh backup`     |
-| test_schedule   | Check job scheduling with pg_timetable.               | `tests/run.sh schedule`   |
+| auth            | Test authentication, security, and tls/ssl.           | `tests/run.sh auth`       |
+| backup          | Check backup and restore functionality of pgBackRest. | `tests/run.sh backup`     |
+| schedule        | Check job scheduling with pg_timetable.               | `tests/run.sh schedule`   |
 
 To run all the tests, stop the original container first:
 
 ```bash
 docker compose down postgres
-tests/run.sh all
+tests/run.sh --network test all
 ```
 
 ### Utilities

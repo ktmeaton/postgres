@@ -47,5 +47,7 @@ ENV TZ='Canada/Mountain'
 # Start in the entrypoint directory
 WORKDIR /docker-entrypoint-initdb.d
 
+USER postgres
+
 # Use the custom server config file
 CMD ["-c","config_file=/etc/postgresql/postgresql.conf"]

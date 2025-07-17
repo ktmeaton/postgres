@@ -111,17 +111,17 @@ test_names=()
 for name in ${positional_args[@]}; do
 
   if [[ $name == "all" ]]; then
-    for test_path in $(ls -d ${tests_dir}/test_*); do
+    for test_path in $(ls -d ${tests_dir}/test-*); do
       test_names+=($(basename $test_path))
     done
   else
-    test_name="test_$name"
+    test_name="test-$name"
     test_dir=${tests_dir}/${test_name}
     if [[ ! -e $test_dir ]]; then
       echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tERROR: Test directory does not exist: ${test_dir}"
       exit 1
     fi
-    test_names+=(test_$name)
+    test_names+=(test-$name)
   fi
 done
 
@@ -132,11 +132,22 @@ for test_name in ${test_names[@]}; do
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t--------------------------------------------------------------------------------------"
   test_dir=${tests_dir}/${test_name}
   compose_file="${test_dir}/docker-compose.yml"
+  container="${test_name}-db"
 
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${test_name}"
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tChecking if docker network exists: $network"
+  network_exists=$(docker network ls  | grep $network || echo false)
+  if [[ $network_exists == "false" ]]; then
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating docker network: $network"
+    docker network create $network
+  else
+    echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tDocker network exists: $network"
+  fi
+
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tSetting up container: ${container}"
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tPreparing docker-compose file: ${compose_file}"
-  sed "s/{DB}/${test_name}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
+  db_name=$(echo "$test_name" | sed 's/-/_/g')
+  sed "s/{DB}/${db_name}/g" ${test_dir}/script.template.sql > ${test_dir}/script.sql
   sed -E \
     -e "s/\{NETWORK\}/$network/g" \
     -e "s/\{NAME\}/$test_name/g" \
@@ -149,8 +160,8 @@ for test_name in ${test_names[@]}; do
     config/docker-compose.template.yml > ${compose_file}
 
   # Make sure it is down
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStopping container if running: ${test_name}"
-  docker compose --env-file ${env_file} -f ${compose_file} down 2> /dev/null
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStopping container if running: ${container}"
+  docker compose --env-file ${env_file} -f ${compose_file} down ${container} 2> /dev/null
 
   if [[ -e ${test_dir}/data ]]; then
     echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data."
@@ -162,11 +173,11 @@ for test_name in ${test_names[@]}; do
   # We will need to regenerate certs with new container/host name
   rm -rf ${test_dir}/data/certs/*
 
-  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${test_name}"
-  docker compose --env-file ${env_file} -f ${compose_file} up -d 2>/dev/null
+  echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStarting container: ${container}"
+  docker compose --env-file ${env_file} -f ${compose_file} up -d ${container} 2>/dev/null
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tWaiting for container status: healthy"
-  wait_for_healthy_container "$test_name"
+  wait_for_healthy_container "$container"
 
   # -----------------------------------------------------------------------------
   # Custom code
@@ -181,7 +192,7 @@ for test_name in ${test_names[@]}; do
     rm -rf ${test_dir}/data
   fi
 
-  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down 2> /dev/null
+  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down ${container} 2> /dev/null
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
 
