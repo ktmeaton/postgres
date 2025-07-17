@@ -45,7 +45,7 @@ jobs:
 
       - name: Run Setup
         run: |
-          ./setup.sh
+          ./setup.sh --network test --name test
 
       - name: Start Container
         run: |
@@ -54,33 +54,33 @@ jobs:
       - name: Healthcheck
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: postgres-db
-          wait-time: 50
+          container: test-db
+          wait-time: 60
           require-status: running
           require-healthy: true
 
       - name: Get Status
         uses: stringbean/docker-healthcheck-action@v3
-        id: postgres-db-container
+        id: test-db-container
         with:
-          container: postgres-db
+          container: test-db
 
       - name: Display Status
-        run: echo "Container is ${{ steps.postgres-db-container.outputs.status  }}"
+        run: echo "Container is ${{ steps.test-db-container.outputs.status  }}"
 
       - name: Check Utils
         run: |
-          for util in $(ls scripts/utils/); do
+          for util in $(ls ../postgres/scripts/utils/); do
             echo "--------------------------------------------------------------------------------------------------------"
             echo "util: $util"
             if [[ "$util" == "run_backup" ]]; then
-              docker exec postgres-db $util full
-              docker exec postgres-db $util diff
-              docker exec postgres-db $util incr
+              docker exec test-db $util full
+              docker exec test-db $util diff
+              docker exec test-db $util incr
             else
-              docker exec postgres-db $util
+              docker exec test-db $util
             fi
           done
 
       - name: Run Tests
-        run: tests/run.sh --network test all
+        run: ../postgres/tests/run.sh --network test all
