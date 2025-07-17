@@ -52,7 +52,7 @@ echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tBeginning ${name} setup."
 # Create the docker network
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tChecking if docker network exists: $network"
-network_exists=$(docker network ls  | grep $network || echo false)
+network_exists=$(docker network ls  | grep -w $network || echo false)
 if [[ $network_exists == "false" ]]; then
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating docker network: $network"
   docker network create $network

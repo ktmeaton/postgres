@@ -4,8 +4,8 @@ set +e
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tExecuting test script."
 
-observed=${test_dir}/observed.txt
-expected=${test_dir}/expected.txt
+observed=${output_dir}/observed.txt
+expected=${output_dir}/expected.txt
 if [[ -e $observed ]]; then rm -f $observed; fi
 if [[ -e $expected ]]; then rm -f $expected; fi
 
@@ -25,7 +25,7 @@ fi
 # ----------------------------------------------------------------------------#
 # custom password
 
-docker exec ${container} bash -c "PGPASSWORD=\$CUSTOM_PASSWORD PGUSER=\$CUSTOM_USER psql"
+docker exec ${container} bash -c "PGPASSWORD=\$CUSTOM_PASSWORD PGUSER=\$CUSTOM_USER PGDATABASE=\${CUSTOM_DB} psql"
 exit_code=$?
 
 if [[ $exit_code -eq 0 ]]; then

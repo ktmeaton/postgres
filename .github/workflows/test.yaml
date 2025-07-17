@@ -83,4 +83,4 @@ jobs:
           done
 
       - name: Run Tests
-        run: tests/run.sh all
+        run: tests/run.sh --network test all

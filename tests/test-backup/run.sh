@@ -2,6 +2,27 @@
 
 set -e
 
+run_pgbackrest () {
+  output_dir=$1
+  postgres_dir=$2
+  args=$3
+
+  docker run \
+      --rm \
+      --entrypoint pgbackrest  \
+      --user $(id -u):$(id -g) \
+      -v ${output_dir}/data/postgres:/data/postgresql \
+      -v ${output_dir}/data/pgbackrest:/data/pgbackrest \
+      -v ${output_dir}/data/spool:/var/spool/pgbackrest/ \
+      -v ${output_dir}/data/certs:/data/certs \
+      -v ${postgres_dir}/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
+      -v ${postgres_dir}/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
+      bff-afirms/postgres:17.5 \
+      $args
+
+  return 0
+}
+
 # -----------------------------------------------------------------------------
 # Test Script
 
@@ -32,13 +53,13 @@ for comment in ${comments[@]}; do
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\t--------------------------------------------------------------------------"
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tRestoring point ($comment): lsn=$lsn label=$label"
 
-  docker compose --env-file .env -f ${test_dir}/docker-compose.yml down $container 2> /dev/null
-  run_pgbackrest "--stanza=main --target-action=promote --type=lsn --target=$lsn --target-timeline=current restore"
-  docker compose --env-file .env -f ${test_dir}/docker-compose.yml up -d $container 2> /dev/null
+  docker compose --env-file .env -f $compose_file down $container
+  run_pgbackrest ${output_dir} ${postgres_dir} "--stanza=main --target-action=promote --type=lsn --set=$label --target=$lsn --target-timeline=current restore"
+  docker compose --env-file .env -f $compose_file up -d $container
   wait_for_healthy_container $container
 
-  observed=${test_dir}/observed.txt
-  expected=${test_dir}/expected.txt
+  observed=${output_dir}/observed.txt
+  expected=${output_dir}/expected.txt
   if [[ -e $observed ]]; then rm -f $observed; fi
   if [[ -e $expected ]]; then rm -f $expected; fi
 
@@ -60,7 +81,9 @@ for comment in ${comments[@]}; do
   observed_debug=$(cat $observed | tr '\n' ';');
   expected_debug=$(cat $expected | tr '\n' ';');
 
-  if [[ $(cmp $expected $observed) == "" ]]; then
+  result=$(cmp $expected $observed 2> /dev/null || echo "fail")
+  exit_code=$?
+  if [[ ${result} == "" && $exit_code == 0 ]]; then
     echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest pass ($comment): expected=$expected_debug observed=$observed_debug"
   else
     echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tERROR: Test failure ($comment): expected=$expected_debug observed=$observed_debug"
