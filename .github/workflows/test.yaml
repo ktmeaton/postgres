@@ -54,19 +54,19 @@ jobs:
       - name: Healthcheck
         uses: stringbean/docker-healthcheck-action@v3
         with:
-          container: postgres
+          container: postgres-db
           wait-time: 50
           require-status: running
           require-healthy: true
 
       - name: Get Status
         uses: stringbean/docker-healthcheck-action@v3
-        id: postgres-container
+        id: postgres-db-container
         with:
-          container: postgres
+          container: postgres-db
 
       - name: Display Status
-        run: echo "Container is ${{ steps.postgres-container.outputs.status  }}"
+        run: echo "Container is ${{ steps.postgres-db-container.outputs.status  }}"
 
       - name: Check Utils
         run: |
@@ -74,11 +74,11 @@ jobs:
             echo "--------------------------------------------------------------------------------------------------------"
             echo "util: $util"
             if [[ "$util" == "run_backup" ]]; then
-              docker exec postgres $util full
-              docker exec postgres $util diff
-              docker exec postgres $util incr
+              docker exec postgres-db $util full
+              docker exec postgres-db $util diff
+              docker exec postgres-db $util incr
             else
-              docker exec postgres $util
+              docker exec postgres-db $util
             fi
           done
 
