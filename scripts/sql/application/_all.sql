@@ -1,0 +1,1 @@
+\ir schemaspy.sql
