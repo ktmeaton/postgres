@@ -83,6 +83,8 @@ mkdir -p certs postgres pgbackrest/archive pgbackrest/backup pgbackrest/log spoo
 mkdir -p schemaspy
 
 source ../.env
+
+echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating schemaspy properties"
 sed \
   -e "s/{NAME}/${name}-db/g" \
   -e "s/{CUSTOM_DB}/${CUSTOM_DB}/g" \
