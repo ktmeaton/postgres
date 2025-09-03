@@ -230,7 +230,7 @@ select
     backup->>'label' as label,
     round((backup->'info'->'size')::numeric / (1024*1024 * 1024), 3) as size,
     'gb'::text as size_units,
-    (backup->'info'->'delta')::integer / (1024 * 1024) as delta,
+    (backup->'info'->'delta')::bigint / (1024 * 1024) as delta,
     'mb'::text as delta_units,
     backup->'annotation' as annotation,
     (backup->'error')::boolean as error,
