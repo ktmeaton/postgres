@@ -12,7 +12,7 @@ services:
     container_name: "{NAME}-db"
     hostname: "{NAME}-db"
     build: .
-    image: "bff-afirms/postgres:17.5"
+    image: "bff-afirms/postgres:17.6"
     restart: unless-stopped
     # Restrict security privileges
     security_opt:

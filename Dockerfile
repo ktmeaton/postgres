@@ -1,4 +1,4 @@
-FROM postgres:17.5-bookworm
+FROM postgres:17.6-bookworm
 
 # PostgreSQL Extensions: postgis
 # Unix Tools: pgbackrest, jq, curl
