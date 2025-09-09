@@ -4,6 +4,7 @@ FROM postgres:17.5-bookworm
 # Unix Tools: pgbackrest, jq, curl
 # Unix GIS Tools: osmium, osm2pgsql
 RUN apt update \
+  && apt upgrade -y \
   && apt install -y curl pgbackrest jq wget postgresql-17-postgis-3 osmium-tool osm2pgsql
 
 # pg_timetable
