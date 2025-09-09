@@ -17,7 +17,7 @@ run_pgbackrest () {
       -v ${output_dir}/data/certs:/data/certs \
       -v ${postgres_dir}/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
       -v ${postgres_dir}/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
-      bff-afirms/postgres:17.5 \
+      bff-afirms/postgres:17.6 \
       $args
 
   return 0
