@@ -136,18 +136,18 @@ for test_name in ${test_names[@]}; do
     -e "s/\{NAME\}/$test_name/g" \
     -e "s/\"$network\"/$network/g" \
     -e "s/\"$test_name\"/$test_name/g" \
-    -e "/volumes:/a \      - ${test_dir}/script.sql:/tmp/${test_name}.sql" \
+    -e "/volumes:/a \      - ${output_dir}/script.sql:/tmp/${test_name}.sql" \
     -e "s|- \./data|- ${output_dir}/data|g" \
     -e "s|- \./|- $(pwd)/|g" \
     -e "s|- \../|- $(pwd)/../|g" \
-    -e "s|build: \.|build: ../../|" \
+    -e "s|build: .*|build: ${postgres_dir}|" \
     config/docker-compose.template.yml > ${compose_file}
 
   # Make sure it is down
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tStopping container if running: ${container}"
-  docker compose --env-file ${env_file} -f ${compose_file} down ${container}
+  docker compose --env-file ${env_file} -f ${compose_file} down ${container} 1>/dev/null 2>&1
 
-  if [[ -e ${test_dir}/data ]]; then
+  if [[ -e ${output_dir}/data ]]; then
     echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCleaning up old test data: ${output_dir}/data"
     rm -rf ${output_dir}/data;
   fi

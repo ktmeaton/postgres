@@ -5,7 +5,8 @@ set -e
 run_pgbackrest () {
   output_dir=$1
   postgres_dir=$2
-  args=$3
+  network=$3
+  args=$4
 
   docker run \
       --rm \
@@ -17,7 +18,7 @@ run_pgbackrest () {
       -v ${output_dir}/data/certs:/data/certs \
       -v ${postgres_dir}/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
       -v ${postgres_dir}/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
-      bff-afirms/postgres:17.6 \
+      ${network}/postgres:17.6 \
       $args
 
   return 0
@@ -29,7 +30,7 @@ run_pgbackrest () {
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tExecuting test script."
 
 docker compose --env-file ${env_file} -f ${compose_file} exec -T $container \
-  bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER -f /tmp/${test_name}.sql" 1> /dev/null 2>&1
+  bash -c "PSQL_PAGER=cat PGPASSWORD=\$POSTGRES_PASSWORD psql -U \$POSTGRES_USER -f /tmp/${test_name}.sql" 1>/dev/null 2>&1
 
 echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tIdentifying restore points."
 cmd="select label,lsn_stop from backup.log_extended where annotation->>'source' = 'test-backup' and annotation->>'comment' = '{comment}' order by stop desc limit 1;"
@@ -54,7 +55,7 @@ for comment in ${comments[@]}; do
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tRestoring point ($comment): lsn=$lsn label=$label"
 
   docker compose --env-file .env -f $compose_file down $container
-  run_pgbackrest ${output_dir} ${postgres_dir} "--stanza=main --target-action=promote --type=lsn --set=$label --target=$lsn --target-timeline=current restore"
+  run_pgbackrest ${output_dir} ${postgres_dir} ${network} "--stanza=main --target-action=promote --type=lsn --set=$label --target=$lsn --target-timeline=current restore"
   docker compose --env-file .env -f $compose_file up -d $container
   wait_for_healthy_container $container
 
