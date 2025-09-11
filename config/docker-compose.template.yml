@@ -12,7 +12,7 @@ services:
     container_name: "{NAME}-db"
     hostname: "{NAME}-db"
     build: .
-    image: "bff-afirms/postgres:17.6"
+    image: "{NETWORK}/postgres:17.6"
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -35,9 +35,6 @@ services:
       CUSTOM_USER:         ${CUSTOM_USER:?}
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
       CUSTOM_DB:           ${CUSTOM_DB:?}
-      # Custom application users
-      SCHEMASPY_USER:      ${SCHEMASPY_USER:?}
-      SCHEMASPY_PASSWORD:  ${SCHEMASPY_PASSWORD:?}
       # Timezone
       TZ:                  'Canada/Mountain'
     volumes:
@@ -73,42 +70,3 @@ services:
         reservations:
           cpus: 1
           memory: 2G
-
-  # ---------------------------------------------------------------------------
-  # SchemaSpy Visualizer
-
-  "{NAME}-schemaspy":
-    container_name: "{NAME}-schemaspy"
-    hostname: "{NAME}-schemaspy"
-    image: schemaspy/schemaspy:7.0.2
-    restart: no
-    depends_on:
-      "{NAME}-db":
-        condition: service_healthy
-    # Restrict security privileges
-    security_opt:
-      - "no-new-privileges=true"
-    cap_drop:
-      - ALL
-    # Run as the host user for volume mount permissions
-    user: ${USER_GROUP_ID}
-    environment:
-      # Ensure we have information about the host user
-      USER_ID:             ${USER_GROUP_ID:?}
-      # Custom application users
-      SCHEMASPY_USER:      ${SCHEMASPY_USER:?}
-      SCHEMASPY_PASSWORD:  ${SCHEMASPY_PASSWORD:?}
-    volumes:
-      - ./data/schemaspy:/output
-    networks:
-      - {NETWORK}
-    # No health check, this is a one-off command runner
-    deploy:
-      resources:
-        limits:
-          cpus: 1
-          memory: 4G
-        reservations:
-          cpus: 1
-          memory: 2G
-    command: ["-configFile",  "/output/schemaspy.properties", "-all"]

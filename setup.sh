@@ -80,19 +80,6 @@ echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating data directories"
 mkdir -p data
 cd data
 mkdir -p certs postgres pgbackrest/archive pgbackrest/backup pgbackrest/log spool
-mkdir -p schemaspy
-
-source ../.env
-
-echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCreating schemaspy properties"
-sed \
-  -e "s/{NAME}/${name}-db/g" \
-  -e "s/{CUSTOM_DB}/${CUSTOM_DB}/g" \
-  -e "s/{SCHEMASPY_USER}/${SCHEMASPY_USER}/g" \
-  -e "s/{SCHEMASPY_PASSWORD}/${SCHEMASPY_PASSWORD}/g" \
-  ../config/schemaspy.template.properties \
-  > schemaspy/schemaspy.properties
-
 cd ..
 
 # -----------------------------------------------------------------------------
