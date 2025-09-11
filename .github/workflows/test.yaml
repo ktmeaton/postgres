@@ -83,4 +83,6 @@ jobs:
           done
 
       - name: Run Tests
-        run: ../postgres/tests/run.sh --network test all
+        run: |
+          docker compose down
+          tests/run.sh --network test all
