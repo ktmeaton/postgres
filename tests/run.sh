@@ -175,8 +175,8 @@ for test_name in ${test_names[@]}; do
   docker compose --env-file .env -f $compose_file down ${container} 2> /dev/null
   if [[ ! $no_cleanup == 'true' ]]; then
     rm -rf ${output_dir}/data
-		image=$(grep -E "image:.*${network}" ${compose_file} | sed -E 's/.*image:|"|\s//g')
-   	docker image rm $image
+		image=$(grep -E "image:.*${network}" ${compose_file} | grep -v "#.*image:" | sed -E 's/.*image:|"|\s//g')
+   	docker image rm $image || true
   fi
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tTest complete: ${test_name}"
