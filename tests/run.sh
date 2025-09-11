@@ -153,7 +153,8 @@ for test_name in ${test_names[@]}; do
   fi
 
   echo -e "$(date '+%Y-%m-%d %H:%m:%S')\tCopying data files into test directory: ${output_dir}"
-  cp -r $(pwd)/data ${output_dir}
+	# Ignore errors relate to containers that mount select directories as root
+  cp -r $(pwd)/data ${output_dir} 2> /dev/null || true
   # We will need to regenerate certs with new container/host name
   rm -rf ${output_dir}/data/certs/*
 
