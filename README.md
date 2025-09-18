@@ -23,6 +23,7 @@ Clone the repository, run the setup script, and start the container.
 git clone https://github.com/ktmeaton/postgres.git
 cd postgres
 ./setup.sh
+docker compose build
 docker compose up -d
 docker compose logs postgres
 ```

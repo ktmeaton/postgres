@@ -1,4 +1,4 @@
-FROM postgres:17.6-bookworm
+FROM postgres:17.6-trixie
 
 # Install system packages:
 # Unix Tools: pgbackrest, jq, curl, wget
@@ -9,7 +9,8 @@ RUN apt update \
 
 # Install postgres extension: pg_timetable
 RUN wget https://github.com/cybertec-postgresql/pg_timetable/releases/download/v5.13.0/pg_timetable_Linux_x86_64.deb \
-  && dpkg -i pg_timetable_Linux_x86_64.deb
+  && dpkg -i pg_timetable_Linux_x86_64.deb \
+  && rm -f pg_timetable_Linux_x86_64.deb
 
 # Transfer custom configuration files
 COPY config/postgresql.conf /etc/postgresql/postgresql.conf
@@ -40,6 +41,9 @@ RUN chown -R postgres:postgres /docker-entrypoint-initdb.d \
 RUN wget -O /usr/local/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 \
   && chmod 755 /usr/local/bin/mkcert \
   && mkcert -install
+
+# Final cleanup
+RUN apt autoremove -y
 
 # Use less with no line wrapping for nicer query results
 ENV PSQL_PAGER='less -S'
