@@ -34,15 +34,25 @@ services:
       PGUSER:              postgres
       PGPASSWORD:          ${POSTGRES_PASSWORD:?}
       # Timezone
-      TZ:                  'Canada/Mountain'
+      TZ:                  'America/Edmonton'
       # Application-specific credentials
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
     volumes:
-      # Database files and backups
+      # Required volumes
       - ./data/postgres/db:/data/postgresql
       - ./data/postgres/pgbackrest:/data/pgbackrest
       - ./data/postgres/certs:/data/certs
       - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      # Optional volume: authentication
+      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      # Optional volume: general config
+      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      # Optional volume: entrypoints
+      # - ./scripts/docker/primary-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      # - ./scripts/docker/secondary-entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
+      # Optional volume: scripts
+      # - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
+      # - ./scripts/utils/:/docker-entrypoint-initdb.d/utils
     networks:
       - "postgres"
     expose:

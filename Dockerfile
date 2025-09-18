@@ -47,7 +47,7 @@ RUN apt autoremove -y
 
 # Use less with no line wrapping for nicer query results
 ENV PSQL_PAGER='less -S'
-ENV TZ='Canada/Mountain'
+ENV TZ='America/Edmonton'
 
 # Start in the entrypoint directory
 WORKDIR /docker-entrypoint-initdb.d
