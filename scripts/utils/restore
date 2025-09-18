@@ -8,10 +8,10 @@ cmd="docker run \
     --rm \
     --entrypoint pgbackrest \
     --user $(id -u):$(id -g) \
-    -v $(pwd)/data/postgres:/data/postgresql \
-    -v $(pwd)/data/pgbackrest:/data/pgbackrest \
-    -v $(pwd)/data/spool:/var/spool/pgbackrest \
-    -v $(pwd)/data/certs:/data/certs \
+    -v $(pwd)/data/postgres/db:/data/postgresql \
+    -v $(pwd)/data/postgres/pgbackrest:/data/pgbackrest \
+    -v $(pwd)/data/postgres/spool:/var/spool/pgbackrest \
+    -v $(pwd)/data/postgres/certs:/data/certs \
     -v $(pwd)/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
     -v $(pwd)/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
     $image \

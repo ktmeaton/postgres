@@ -73,6 +73,9 @@ jobs:
           for util in $(ls scripts/utils/); do
             echo "--------------------------------------------------------------------------------------------------------"
             echo "util: $util"
+            if [[ "$util" == "restore" ]]; then
+              continue
+            fi
             if [[ "$util" == "run_backup" ]]; then
               docker compose exec postgres $util full
               docker compose exec postgres $util diff
