@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PGPASSWORD=$POSTGRES_PASSWORD psql -U postgres postgres \
+    -c "select * from backup.log;"
