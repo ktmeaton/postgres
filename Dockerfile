@@ -15,6 +15,7 @@ RUN wget https://github.com/cybertec-postgresql/pg_timetable/releases/download/v
 # Transfer custom configuration files
 COPY config/postgresql.conf /etc/postgresql/postgresql.conf
 COPY config/pg_hba.conf /etc/postgresql/pg_hba.conf
+COPY config/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf
 
 # Transfer essential startup scripts
 COPY scripts/docker/primary-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -33,6 +34,7 @@ RUN chown -R postgres:postgres /docker-entrypoint-initdb.d \
     && touch /etc/pgbackrest/pgbackrest.conf \
     && chmod 640 /etc/pgbackrest/pgbackrest.conf \
     && chown postgres:postgres /etc/pgbackrest/pgbackrest.conf \
+    && chmod +r /etc/pgbackrest/pgbackrest.conf \
     && mkdir -p /var/lib/pgbackrest \
     && chmod 750 /var/lib/pgbackrest \
     && chown postgres:postgres /var/lib/pgbackrest
