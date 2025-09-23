@@ -19,7 +19,8 @@ COPY config/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf
 
 # Transfer essential startup scripts
 COPY scripts/docker/primary-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY scripts/docker/secondary-entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
+RUN rm -f /docker-entrypoint-initdb.d/entrypoint.sh
+COPY scripts/docker/secondary-entrypoint.sh /docker-entrypoint-initdb.d/01_entrypoint.sh
 COPY scripts/sql /docker-entrypoint-initdb.d/sql
 COPY scripts/utils /docker-entrypoint-initdb.d/utils
 
