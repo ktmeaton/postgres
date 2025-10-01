@@ -33,3 +33,21 @@ begin
 
    end if;
 end $$;
+
+\echo '-------------------------------------------------------------------------------'
+\echo 'creating function: get_pg_roles'
+
+-- summarize pg roles, membership, and grantors.
+create or replace function public.get_pg_roles()
+returns table (role text, member text, grantor text)
+language sql
+as $$
+    select
+        r1.rolname,
+        r2.rolname as member,
+            r3.rolname as grantor
+    from pg_auth_members m
+    left join pg_roles r1 on m.roleid = r1.oid
+    left join pg_roles r2 on m.member = r2.oid
+    left join pg_roles r3 on m.grantor = r3.oid;
+$$;
