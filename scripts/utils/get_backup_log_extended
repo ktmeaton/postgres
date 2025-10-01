@@ -1,4 +1,0 @@
-#!/bin/bash
-
-PSQL_PAGER=cat PGPASSWORD=$POSTGRES_PASSWORD PGUSER=$POSTGRES_USER psql postgres \
-    -c "select * from backup.log_extended;"
