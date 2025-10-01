@@ -1,0 +1,21 @@
+#!/bin/bash
+
+lsn=$1
+label=$2
+image=$3
+
+cmd="docker run \
+    --rm \
+    --entrypoint pgbackrest \
+    --user $(id -u):$(id -g) \
+    -v $(pwd)/data/postgres/db:/data/postgresql \
+    -v $(pwd)/data/postgres/pgbackrest:/data/pgbackrest \
+    -v $(pwd)/data/postgres/spool:/var/spool/pgbackrest \
+    -v $(pwd)/data/postgres/certs:/data/certs \
+    -v $(pwd)/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
+    -v $(pwd)/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
+    $image \
+    --stanza=main --target-action=promote --type=lsn --set=$label --target=$lsn --target-timeline=current restore"
+
+echo $cmd
+eval $cmd

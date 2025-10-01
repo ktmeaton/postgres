@@ -1,0 +1,4 @@
+data/
+.env*
+tests_output/
+.cache*

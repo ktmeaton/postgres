@@ -1,0 +1,74 @@
+networks:
+  postgres:
+    name: "${COMPOSE_PROJECT_NAME}"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+
+  postgres:
+    container_name: "${COMPOSE_PROJECT_NAME}-db"
+    hostname: postgres
+    build: .
+    image: ktmeaton/postgres:17.6
+    restart: unless-stopped
+    # Restrict security privileges
+    security_opt:
+      - "no-new-privileges=true"
+    cap_drop:
+      - ALL
+    # Run as the host user, so that when we mount the database files
+    # to a local path, they are also owned by the host user
+    user: ${USER_GROUP_ID}
+    environment:
+      # Domain name for TLS certficates
+      TLS_DOMAIN:          postgres
+      # Ensure we have information about the host user
+      USER_GROUP_ID:       ${USER_GROUP_ID:?}
+      # Install the database in a custom folder for non-root access
+      PGDATA:              /data/postgresql/main
+      # Superuser
+      POSTGRES_PASSWORD:   ${POSTGRES_PASSWORD:?}
+      # Default connection credentials
+      PGUSER:              postgres
+      PGPASSWORD:          ${POSTGRES_PASSWORD:?}
+      # Timezone
+      TZ:                  'America/Edmonton'
+      # Application-specific credentials
+      CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
+    volumes:
+      # Required volumes
+      - ./data/postgres/db:/data/postgresql
+      - ./data/postgres/pgbackrest:/data/pgbackrest
+      - ./data/postgres/certs:/data/certs
+      - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      # Optional volume: authentication
+      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      # Optional volume: general config
+      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
+      # Optional volume: entrypoints
+      # - ./scripts/docker/primary-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
+      # - ./scripts/docker/secondary-entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
+      # Optional volume: scripts
+      # - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
+      # - ./scripts/utils/:/docker-entrypoint-initdb.d/utils
+    networks:
+      - "postgres"
+    expose:
+      - "5432"
+    # Uncomment to access database on the host network
+    # ports: ["5432:5432"]
+    healthcheck:
+      test: [ "CMD-SHELL", "PGPASSWORD=$$CUSTOM_PASSWORD psql --set=sslmode=require -U custom custom -l"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 4G
+        reservations:
+          cpus: 1
+          memory: 2G

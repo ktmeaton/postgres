@@ -1,0 +1,91 @@
+name: Test
+
+# Workflow conditions
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+  release:
+    types: [published]
+  workflow_call:
+
+env:
+  GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+
+      - name: Setup Pre-Commit
+        run: |
+          pip install pre-commit==4.2.0
+          pre-commit install --install-hooks
+
+      - name: Run Pre-Commit
+        run: |
+          pre-commit run --all-files
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run Setup
+        run: |
+          ./setup.sh
+
+      - name: Start Container
+        run: |
+          docker compose up -d
+
+      - name: Healthcheck
+        uses: stringbean/docker-healthcheck-action@v3
+        with:
+          container: postgres-db
+          wait-time: 60
+          require-status: running
+          require-healthy: true
+
+      - name: Get Status
+        uses: stringbean/docker-healthcheck-action@v3
+        id: postgres-db-container
+        with:
+          container: postgres-db
+
+      - name: Display Status
+        run: echo "Container is ${{ steps.postgres-db-container.outputs.status  }}"
+
+      - name: Check Utils
+        run: |
+          for util in $(ls scripts/utils/); do
+            echo "--------------------------------------------------------------------------------------------------------"
+            echo "util: $util"
+            if [[ "$util" == "restore" ]]; then
+              continue
+            fi
+            if [[ "$util" == "run_backup" ]]; then
+              docker compose exec postgres $util full
+              docker compose exec postgres $util diff
+              docker compose exec postgres $util incr
+            else
+              docker compose exec postgres $util
+            fi
+          done
+
+      - name: Run Tests
+        run: |
+          docker compose down
+          tests/run.sh --project ci all
