@@ -38,6 +38,44 @@ docker compose logs postgres
 - Database backups can be found under `data/pgbackrest`
 - Backup scheduling is specified in `scripts/sql/extension/timetable.sql`
 
+### Restore
+
+1. Get the latest successful backup.
+
+    ```bash
+    docker compose exec db psql -c 'select stop,label,lsn_stop from backup.log_extended order by stop desc limit 1';
+    ```
+
+    ```text
+              stop          |               label               |  lsn_stop
+    ------------------------+-----------------------------------+------------
+    2025-10-14 11:19:50-06  | 20251012-000013F_20251014-111947I | 0/C4000168
+    ```
+
+1. Shutdown the database.
+
+    ```bash
+    docker compose down
+    ```
+
+1. Backup the database.
+
+    ```bash
+    cp -r data data-bak
+    ```
+
+1. Restore backup point.
+
+  ```bash
+  scripts/utils/restore --lsn 0/C4000168 --label 20251012-000013F_20251014-111947I --image bff-afirms/postgres:17.6 --data-dir data
+  ```
+
+1. Restart database to complete restore.
+
+  ```bash
+  docker compose up -d
+  ```
+
 ## Tests
 
 | name            | description                                           | command                   |

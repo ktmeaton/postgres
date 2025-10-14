@@ -1,19 +1,68 @@
 #!/bin/bash
 
-lsn=$1
-label=$2
-image=$3
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --lsn)
+      lsn="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --image)
+      image="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --label)
+      label="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --data-dir)
+      data_dir="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+data_dir=${data_dir:-$(pwd)/data}
+
+if [[ -z $lsn ]]; then
+    echo "--lsn is a required parameter."
+    exit 1
+fi
+
+if [[ -z $label ]]; then
+    echo "--label is a required parameter."
+    exit 1
+fi
+
+if [[ -z $image ]]; then
+    echo "--image is a required parameter."
+    exit 1
+fi
+
+if [[ ! -e ${data_dir}-bak ]]; then
+    echo "You must make a backup of your data directory at: ${data_dir}-bak"
+    exit 1
+fi
 
 cmd="docker run \
     --rm \
     --entrypoint pgbackrest \
     --user $(id -u):$(id -g) \
-    -v $(pwd)/data/postgres/db:/data/postgresql \
-    -v $(pwd)/data/postgres/pgbackrest:/data/pgbackrest \
-    -v $(pwd)/data/postgres/spool:/var/spool/pgbackrest \
-    -v $(pwd)/data/postgres/certs:/data/certs \
-    -v $(pwd)/config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf \
-    -v $(pwd)/config/pg_hba.conf:/etc/postgresql/pg_hba.conf \
+    -v ${data_dir}/postgres/db:/data/postgresql \
+    -v ${data_dir}/postgres/pgbackrest:/data/pgbackrest \
+    -v ${data_dir}/postgres/spool:/var/spool/pgbackrest \
+    -v ${data_dir}/postgres/certs:/data/certs \
     $image \
     --stanza=main --target-action=promote --type=lsn --set=$label --target=$lsn --target-timeline=current restore"
 
