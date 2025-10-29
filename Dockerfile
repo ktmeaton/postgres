@@ -18,9 +18,10 @@ COPY config/pg_hba.conf /etc/postgresql/pg_hba.conf
 COPY config/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf
 
 # Transfer essential startup scripts
-COPY scripts/docker/primary-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY scripts/docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN rm -f /docker-entrypoint-initdb.d/entrypoint.sh
-COPY scripts/docker/secondary-entrypoint.sh /docker-entrypoint-initdb.d/01_entrypoint.sh
+COPY scripts/docker/01_entrypoint.sh /docker-entrypoint-initdb.d/01_entrypoint.sh
+COPY scripts/docker/02_applications.sh /docker-entrypoint-initdb.d/02_applications.sh
 COPY scripts/sql /docker-entrypoint-initdb.d/sql
 COPY scripts/utils /docker-entrypoint-initdb.d/utils
 
@@ -38,7 +39,10 @@ RUN chown -R postgres:postgres /docker-entrypoint-initdb.d \
     && chmod +r /etc/pgbackrest/pgbackrest.conf \
     && mkdir -p /var/lib/pgbackrest \
     && chmod 750 /var/lib/pgbackrest \
-    && chown postgres:postgres /var/lib/pgbackrest
+    && chown postgres:postgres /var/lib/pgbackrest \
+    && mkdir -p /data/postgresql \
+    && chown -R postgres:postgres /data/postgresql \
+    && chmod +r /etc/postgresql/*
 
 # TLS Certificates (Development)
 RUN wget -O /usr/local/bin/mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.4/mkcert-v1.4.4-linux-amd64 \

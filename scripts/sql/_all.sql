@@ -9,7 +9,6 @@
 \ir function/_all.sql;
 \ir table/_all.sql;
 \ir role/_all.sql
-\ir application/_all.sql
 
 -- reconnect to refresh changes.
 \c postgres

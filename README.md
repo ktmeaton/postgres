@@ -67,7 +67,7 @@ docker compose logs postgres
 1. Restore backup point.
 
   ```bash
-  scripts/utils/restore --lsn 0/C4000168 --label 20251012-000013F_20251014-111947I --image bff-afirms/postgres:17.6 --data-dir data
+  scripts/utils/restore --lsn 0/C4000168 --label 20251012-000013F_20251014-111947I --image ktmeaton/postgres:17.6 --data-dir data
   ```
 
 1. Restart database to complete restore.
