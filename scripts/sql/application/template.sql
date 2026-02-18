@@ -26,7 +26,6 @@ comment on role {name} is 'application: {name} access to connect and create.';
 
 -- permissions
 grant create, connect on database {name} to {name};
-alter role {name} with createrole;
 grant usage, create on schema public to {name};
 
 

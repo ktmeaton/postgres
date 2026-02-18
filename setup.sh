@@ -24,7 +24,7 @@ fi
 echo "Creating data directories: data/postgres"
 mkdir -p data/postgres
 cd data/postgres
-mkdir -p certs db pgbackrest/archive pgbackrest/backup pgbackrest/log spool
+mkdir -p certs db log pgbackrest/archive pgbackrest/backup pgbackrest/log spool
 cd ../..
 
 echo "Completed postgres setup."

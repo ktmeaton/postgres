@@ -10,11 +10,8 @@ pg_timetable \
   --log-file=${PGDATA}/log/timetable_init.log \
   --log-file-format=text \
   --log-file-rotate \
-  --dbname=postgres \
-  --user=$POSTGRES_USER \
-  --password=$POSTGRES_PASSWORD \
-  --sslmode=require \
-  --clientname=timetable_worker
+  --clientname=timetable_worker \
+  --connstr="postgresql:///postgres?sslmode=require"
 
 echo "-------------------------------------------------------------------------------
 -- pg_timetable initialization complete

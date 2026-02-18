@@ -11,7 +11,7 @@ services:
     container_name: "${COMPOSE_PROJECT_NAME}-db"
     hostname: postgres
     build: .
-    image: ktmeaton/postgres:17.6
+    image: ktmeaton/postgres:18.1
     restart: unless-stopped
     # Restrict security privileges
     security_opt:
@@ -39,28 +39,23 @@ services:
       CUSTOM_PASSWORD:     ${CUSTOM_PASSWORD:?}
     volumes:
       # Required volumes
-      - ./data/postgres/db:/data/postgresql
-      - ./data/postgres/pgbackrest:/data/pgbackrest
-      - ./data/postgres/certs:/data/certs
-      # Optional volume: authentication
-      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
-      # Optional volume: general config
-      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf
-      # Optional volume: backup config
-      # - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
-      # Optional volume: entrypoints
-      # - ./scripts/docker/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh
-      # - ./scripts/docker/01_entrypoint.sh:/docker-entrypoint-initdb.d/01_entrypoint.sh
-      # - ./scripts/docker/02_applications.sh:/docker-entrypoint-initdb.d/02_applications.sh
-      # Optional volume: scripts
-      # - ./scripts/sql/:/docker-entrypoint-initdb.d/sql
-      # - ./scripts/utils/:/docker-entrypoint-initdb.d/utils
+      - ./data/postgres/db:/data/postgresql                                                    # Database Files
+      - ./data/postgres/pgbackrest:/data/pgbackrest                                            # Backups
+      - ./data/postgres/certs:/data/certs                                                      # TLS Certs
+      - ./data/postgres/log:/data/log                                                           # Log Files
+      # Optional volumes
+      # - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf                                     # Authentication
+      # - ./config/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro                          # Backups
+      # - ./config/postgresql.conf:/etc/postgresql/postgresql.conf                             # General
+      # - ./scripts/docker/01_setup.sh:/usr/local/bin/01_setup.sh                              # Extension Setup
+      # - ./scripts/docker/02_applications.sh:/docker-entrypoint-initdb.d/02_applications.sh   # Application setup
+      # - ./scripts/sql/:/docker-entrypoint-initdb.d/sql                                       # SQL Scripts
+      # - ./scripts/utils/:/docker-entrypoint-initdb.d/utils                                   # Shell Utilities
     networks:
       - "postgres"
     expose:
       - "5432"
-    # Uncomment to access database on the host network
-    # ports: ["5432:5432"]
+    ports: ["5432:5432"]
     healthcheck:
       test: [ "CMD-SHELL", "PGPASSWORD=$$CUSTOM_PASSWORD psql --set=sslmode=require -U custom custom -l"]
       interval: 10s

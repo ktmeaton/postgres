@@ -34,6 +34,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 data_dir=${data_dir:-$(pwd)/data}
+# absolute path conversion
+if [[ ! "$data_dir" =~ ^/ ]]; then
+  data_dir="$(pwd)/${data_dir}"
+fi;
 
 if [[ -z $lsn ]]; then
     echo "--lsn is a required parameter."
